@@ -44,13 +44,20 @@ void Controller::calculateControlEffort(float delta_x, float delta_y,
     //convert to motor L and R outputs or atleast figure out how
 }
 
-// Set new gain values
-void Controller::setGains(float kp_x, float ki_x, float kd_x,
-                          float kp_y, float ki_y, float kd_y) {
-    // Assign new gain values
+// Set new gain values (this could be sued for quick testing, 
+//if we want to tune our gains through terminal without having to change code and recompile everytime)
+void Controller::setGains(float kp_x, float ki_x, float kd_x,float kp_y, float ki_y, float kd_y) {
+    this->Kp_x = kp_x;
+    this->Kp_y = kp_y;
+    this->Ki_x = ki_x;
+    this->Ki_y = ki_y;
+    this->Kd_x = kd_x;
+    this->Kd_y = kd_y;    
 }
 
 // Reset internal state (the attributrs)
 void Controller::reset() {
-    // Zero out integrals and previous errors
+    // Zero out integrals and previous 
+    this->integral_error_x = 0;
+    this->integral_error_y = 0;
 }
