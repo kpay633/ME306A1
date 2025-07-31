@@ -17,23 +17,31 @@ Controller::Controller(float kp_x, float ki_x, float kd_x, float kp_y, float ki_
 // Calculate control effort
 void Controller::calculateControlEffort(float delta_x, float delta_y,
                                         float& output_L, float& output_R) {
-    // PID logic for X and Y axes
+    //PID logic for X and Y axes
     float P_output_x = this->Kp_x * delta_x;
     float P_output_y = this->Kp_y * delta_y;
 
-    //this is a bit wront
-    // float I_ouput_x = this->Ki_x * integral_error_x;
-    // float I_ouput_y = this->Ki_y * integral_error_y;
-    // float D_output_x = this->Kd_x * dt;
-    // float D_output_y = this->Kd_y * dt;
+    //integral calculation fro I term
+    integral_error_x += delta_x * dt;
+    integral_error_y += delta_y * dt;
 
-    // float control_output_x = P_output_x+ I_ouput_x +D_output_x;
-    // float control_output_y = P_output_y+ I_ouput_y +D_output_y;
+    //I term
+    float I_output_x = this->Ki_x * integral_error_x;
+    float I_output_y = this->Ki_y * integral_error_y;
 
+    //change in error calcualtion for D term
+    float derivative_x = (delta_x - prev_error_x) / dt;
+    float derivative_y = (delta_y - prev_error_y) / dt;
+    
+    //D term
+    float D_output_x = this->Kd_x * derivative_x;
+    float D_output_y = this->Kd_y * derivative_y;
 
+    //Update last error to be current error
+    prev_error_x = delta_x;
+    prev_error_y = delta_y;
 
-
-    // Convert to motor L and R outputs
+    //convert to motor L and R outputs or atleast figure out how
 }
 
 // Set new gain values
@@ -42,7 +50,7 @@ void Controller::setGains(float kp_x, float ki_x, float kd_x,
     // Assign new gain values
 }
 
-// Reset internal state
+// Reset internal state (the attributrs)
 void Controller::reset() {
     // Zero out integrals and previous errors
 }
