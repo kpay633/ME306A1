@@ -1,4 +1,11 @@
 #include "plotter.h"
+#include "limit_switch.h"
+#include "motor.h"
+#include "encoder.h"
+
+Limit_Switch limit_switch_left, limit_switch_right, limit_switch_top, limit_switch_bottom;
+Motor motor_A, motor_B;
+Encoder encoder_A, encoder_B;
 
 Plotter::Plotter() {
     current_pos[0] = 0;
@@ -31,4 +38,78 @@ int *Plotter::calc_pos_error(int current_pos[2], int target_pos[2]) {
     delta_pos[0] = target_pos[0] - current_pos[0];
     delta_pos[1] = target_pos[1] - current_pos[1];
     return delta_pos;
+}
+
+void Plotter::home() {
+    while (!limit_switch_left.is_pressed()) {
+        motor_A.clockwise();
+        motor_B.clockwise();
+    }
+
+    if (limit_switch_left.is_pressed()) {
+        motor_A.stop();
+        motor_B.stop();
+        motor_A.anticlockwise_retreat();
+        motor_B.anticlockwise_retreat();
+        while (!limit_switch_left.is_pressed()) {
+            motor_A.clockwise_approach();
+            motor_B.clockwise_approach();
+        }
+        motor_A.stop();
+        motor_B.stop();
+    }
+
+    while (!limit_switch_right.is_pressed()) {
+        motor_A.anticlockwise();
+        motor_B.anticlockwise();
+    }
+
+    if (limit_switch_right.is_pressed()) {
+        motor_A.stop();
+        motor_B.stop();
+        motor_A.clockwise_retreat();
+        motor_B.clockwise_retreat();
+        while (!limit_switch_right.is_pressed()) {
+            motor_A.anticlockwise_approach();
+            motor_B.anticlockwise_approach();
+        }
+        motor_A.stop();
+        motor_B.stop();
+    }
+
+    while (!limit_switch_top.is_pressed()) {
+        motor_A.anticlockwise();
+        motor_B.clockwise();
+    }
+
+    if (limit_switch_top.is_pressed()) {
+        motor_A.stop();
+        motor_B.stop();
+        motor_A.clockwise_retreat();
+        motor_B.anticlockwise_retreat();
+        while (!limit_switch_top.is_pressed()) {
+            motor_A.anticlockwise_approach();
+            motor_B.clockwise_approach();
+        }
+        motor_A.stop();
+        motor_B.stop();
+    }
+
+    while (!limit_switch_bottom.is_pressed()) {
+        motor_A.clockwise();
+        motor_B.anticlockwise();
+    }
+
+    if (limit_switch_bottom.is_pressed()) {
+        motor_A.stop();
+        motor_B.stop();
+        motor_A.anticlockwise_retreat();
+        motor_B.clockwise_retreat();
+        while (!limit_switch_bottom.is_pressed()) {
+            motor_A.clockwise_approach();
+            motor_B.anticlockwise_approach();
+        }
+        motor_A.stop();
+        motor_B.stop();
+    }
 }
