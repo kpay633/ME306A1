@@ -1,6 +1,12 @@
 #ifndef CONTROLLER_HPP
 #define CONTROLLER_HPP
 
+enum class controlMode{
+    P,
+    PI,
+    PID
+};
+
 class Controller {
 private:
     
@@ -17,11 +23,15 @@ private:
     //timestep (this might need to come from the timer?)
     float dt;
 
+    //outputs
+    float motor_left_control_effort;
+    float motor_right_control_effort;
+
 public:
 
     Controller(float kp_x, float ki_x, float kd_x, float kp_y, float ki_y, float kd_y, float timestep);
 
-    void calculateControlEffort(float delta_x, float delta_y, float& output_L, float& output_R);
+    void calculateControlEffort(float current_error_x, float current_error_y, controlMode mode);
 
     void setGains(float kp_x, float ki_x, float kd_x, float kp_y, float ki_y, float kd_y);
     void reset();
