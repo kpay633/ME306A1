@@ -58,9 +58,17 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
             break;
     }
 
-    //convert to motor L and R outputs or atleast figure out how
+    //TODO: convert to motor L and R outputs or atleast figure out how
     this->motor_left_control_effort = control_output_x + control_output_y;
     this->motor_right_control_effort = control_output_x - control_output_y;
+}
+
+float Controller::getMotorLeftControlEffort() const{
+    return this->motor_left_control_effort;
+}
+
+float Controller::getMotorRightControlEffort() const{
+    return this->motor_right_control_effort;
 }
 
 // Set new gain values (this could be used for quick testing, 
@@ -80,3 +88,5 @@ void Controller::reset() {
     this->integral_error_x = 0;
     this->integral_error_y = 0;
 }
+
+
