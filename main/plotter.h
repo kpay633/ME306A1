@@ -9,7 +9,7 @@ class Plotter {
         int *get_target_pos();
         void set_target_pos(int pos[2]);
         int *calc_pos_error(int current[2], int target[2]);
-
+        void home();
 
     private:
         int current_pos[2];
