@@ -1,5 +1,5 @@
-//this is where code for the contoller will go
-
+//this is where code for the controller will go
+#include <avr/io.h>
 #include "controller.hpp"
 
 // Constructor
@@ -61,6 +61,13 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
     //TODO: convert to motor L and R outputs or atleast figure out how
     this->motor_left_control_effort = control_output_x + control_output_y;
     this->motor_right_control_effort = control_output_x - control_output_y;
+
+    //Print the control efforts to the console fr debugging purposes
+    Serial.print("Left motor control effort: ");
+    Serial.println(motor_left_control_effort);
+    Serial.print("Right motor control effort: ");
+    Serial.println(motor_right_control_effort);
+
 }
 
 float Controller::getMotorLeftControlEffort() const{
@@ -87,6 +94,8 @@ void Controller::reset() {
     // Zero out integrals and previous 
     this->integral_error_x = 0;
     this->integral_error_y = 0;
+    this->prev_error_x = 0;
+    this->prev_error_y = 0;
 }
 
 
