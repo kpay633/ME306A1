@@ -3,18 +3,25 @@
 #include "controller.hpp"
 
 // Constructor
-Controller::Controller(float kp_x, float ki_x, float kd_x, float kp_y, float ki_y, float kd_y, float timestep) {
+Controller::Controller(float kp_x, float ki_x, float kd_x, float kp_y, float ki_y, float kd_y, float kv_x, float kv_y, float timestep) {
     this->Kp_x = kp_x;
     this->Kp_y = kp_y;
     this->Ki_x = ki_x;
     this->Ki_y = ki_y;
     this->Kd_x = kd_x;
     this->Kd_y = kd_y;
+    this->Kv_x = kv_x;
+    this->Kv_y = ky_y;
     this->dt = timestep;
 }
 
 // Calculate control effort PID
-void Controller::calculateControlEffort(float current_error_x, float current_error_y, controlMode mode) {
+void Controller::calculateControlEffort(float current_error_x, float current_error_y, float v_desired_x, float v_desired_y, controlMode mode) {
+    
+    //feed forward effort
+    float ff_x = Kv_x * v_desired_x;
+    float ff_y = Kv_y * v_desired_y;
+    
     //PID logic for X and Y axes
     float P_output_x = this->Kp_x * current_error_x;
     float P_output_y = this->Kp_y * current_error_y;
@@ -39,9 +46,9 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
     prev_error_x = current_error_x;
     prev_error_y = current_error_y;
     
-    //calculate control outputs
-    float control_output_x = 0.0f;
-    float control_output_y = 0.0f;
+    //calculate control outputs, initialising them to feed forward
+    float control_output_x = ff_x;
+    float control_output_y = ff_y;
 
     switch (mode) {
         case controlMode::P:
@@ -51,6 +58,10 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
         case controlMode::PI:
             float control_output_x = P_output_x + I_output_x;
             float control_output_y = P_output_y + I_output_y;
+            break;
+        case controlMode::PD:
+            float control_output_x = P_output_x + D_output_x;
+            float control_output_y = P_output_y + D_output_y;
             break;
         case controlMode::PID:
             float control_output_x = P_output_x + I_output_x + D_output_x;
