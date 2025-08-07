@@ -1,6 +1,6 @@
 #ifndef MOTOR_HPP
 #define MOTOR_HPP
-#include "encoder.h"
+#include "encoder.hpp"
 
 class Encoder;
 
@@ -17,12 +17,11 @@ class Motor {
     int pwm_pin;
     int enc_a_pin;
     int enc_b_pin;
-    Encoder* encoderOne;
+    Encoder* myEncoder;
+    int motorNumber;
 
   public:
-    //Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin);
-        Motor(int voltage, int pwm_pin, int enc_a_pin, int enc_b_pin);
-
+    Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin);
 
     int get_voltage() const;
     void move_motor(int voltage);

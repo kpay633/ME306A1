@@ -7,9 +7,13 @@
 
 class Encoder {
 public:
-    Encoder(int PinA, int PinB);
+    Encoder(int motorNumber);
     int GetEncoderDist();
+    void ResetEncoder();
     void incrementEncoder();
+
+    static Encoder* encoder1;
+    static Encoder* encoder2;
 private:
     volatile uint16_t encCount;
     int pinA;

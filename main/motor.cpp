@@ -1,12 +1,9 @@
 #include "motor.hpp"
 #include <avr/io.h>
-// #include "encoder.h"
+#include "encoder.hpp"
 
-// Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin)
-//   : voltage(voltage), timer(timer), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
-
-Motor::Motor(int voltage, int pwm_pin, int enc_a_pin, int enc_b_pin)
-: voltage(voltage), timer(Timer::TIMER3A), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
+Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin)
+  : voltage(voltage), timer(timer), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
 
   switch (timer) {
     case Timer::TIMER3A:
@@ -29,7 +26,8 @@ Motor::Motor(int voltage, int pwm_pin, int enc_a_pin, int enc_b_pin)
       break;
   }
 
-  encoderOne = new Encoder(enc_a_pin, enc_b_pin);
+  myEncoder = new Encoder(motorNumber);
+  
 }
 
 int Motor::get_voltage() const {
@@ -53,5 +51,5 @@ void Motor::move_motor(int new_voltage) {
 }
 
 int Motor::GetEncoderDist() {
-    return encoderOne->GetEncoderDist();
+    return myEncoder->GetEncoderDist();
 }

@@ -1,39 +1,79 @@
-#include "encoder.h"
-Encoder* thisObject = nullptr;
+#include "encoder.hpp"
 
-Encoder::Encoder(int pinA, int pinB)
-  : pinA(pinA), pinB(pinB), encCount(32768) {
+Encoder* Encoder::encoder1 = nullptr;
+Encoder* Encoder::encoder2 = nullptr;
 
-cli();
+Encoder::Encoder(int motorNumber)
+  : encCount(0) {
+        if(motorNumber == 2){
+            // Setup for motor two
+            cli();
 
-DDRD &= ~(1 << pinA);
-DDRD &= ~(1 << pinB);
+              DDRD &= ~(1 << PD3);
+              DDRD &= ~(1 << PD2);
 
-EICRB |= (1 << ISC40);
-EICRB &= ~(1 << ISC41);
-EIMSK |= (1 << INT4);
+              EICRA |= (1 << ISC20);
+              EICRA &= ~(1 << ISC21);
+              EIMSK |= (1 << INT2);
 
-thisObject = this;
+              pinA = PD2;
+              pinB = PD3;
 
-sei();
-}
+              encoder2 = this;
+
+              sei();
+        } else if (motorNumber == 1){
+            // Setup for motor one
+            cli();
+
+              DDRD &= ~(1 << PD1);
+              DDRD &= ~(1 << PD0);
+
+              EICRA |= (1 << ISC00);
+              EICRA &= ~(1 << ISC01);
+              EIMSK |= (1 << INT0);
+
+              pinA = PD0;
+              pinB = PD1;
+
+              encoder1 = this;
+
+              sei();
+    }
+  }
 
 int Encoder::GetEncoderDist() {
   return int(double(encCount) * 13.5 * 3.14 / 172 / 24); // Convert counts to distance
 }
 
+void Encoder::ResetEncoder() {
+  encCount = 0; // Reset the encoder count to zero
+}
+
+// void Encoder::SetPointer(Encoder* uniquePointer) {
+
+// }
+
 void Encoder::incrementEncoder() {
-  uint8_t pin_state = PINE;
-  uint8_t a = (pin_state >> 4) & 0x01;
-  uint8_t b = (pin_state >> 5) & 0x01;
+  uint8_t pin_state = PIND;
+  uint8_t a = (pin_state >> pinA) & 0x01;
+  uint8_t b = (pin_state >> pinB) & 0x01;
 
   if (a == b) {
     encCount++;
   } else {
-    encCount--;
+    encCount--; 
   }
 }
 
-ISR(INT4_vect) {
-  thisObject->incrementEncoder();
+ISR(INT0_vect) {
+  if(Encoder::encoder1 != nullptr) {
+    Encoder::encoder1->incrementEncoder();
+  }
+}
+
+ISR(INT2_vect) {
+  if(Encoder::encoder2 != nullptr) {
+    Encoder::encoder2->incrementEncoder();
+  }
 }
