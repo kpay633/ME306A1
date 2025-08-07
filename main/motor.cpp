@@ -1,52 +1,57 @@
+#include "motor.hpp"
 #include <avr/io.h>
+// #include "encoder.h"
 
-int E1 = 5;
-int M1 = 4;
-int E2 = 6;
-int M2 = 7;
-void setup()
-{
-cli();
+// Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin)
+//   : voltage(voltage), timer(timer), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
 
-Serial.begin(9600);
+Motor::Motor(int voltage, int pwm_pin, int enc_a_pin, int enc_b_pin)
+: voltage(voltage), timer(Timer::TIMER3A), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
 
-pinMode(M1, OUTPUT);
-pinMode(M2, OUTPUT);
+  switch (timer) {
+    case Timer::TIMER3A:
+      // PE3 → OC3A → D5
+      DDRE |= (1 << PE3);  // Set PE3 as output
 
-DDRE &= ~((1 << PE5) | (1 << PE4));
+      // Fast PWM, 8-bit: WGM3 = 0b0101
+      TCCR3A = (1 << COM3A1) | (1 << WGM30);
+      TCCR3B = (1 << WGM32) | (1 << CS31); // Prescaler = 8
+      OCR3A = voltage;
+      break;
 
-EICRB |= (1 << ISC40);
-EICRB &= ~(1 << ISC41);
-EIMSK |= (1 << INT4);
+    case Timer::TIMER4A:
+      // PH3 → OC4A → D6
+      DDRH |= (1 << PH3);  // Set PH3 as output
 
-sei();
-}
-
-uint16_t turns = 32767;
-
-void loop()
-{
-int value = 100;
-
-digitalWrite(M1,HIGH);
-digitalWrite(M2, HIGH);
-analogWrite(E1, value); //PWM Speed Control
-analogWrite(E2, value); //PWM Speed Control
-
-// Serial.print(current_state,BIN);
-// Serial.print(" ");
-Serial.print(turns);
-Serial.println();
-
-}
-
-ISR(INT4_vect) {
-  uint8_t pin_state = PINE;
-  uint8_t a = (pin_state >> 4) & 0x01;
-  uint8_t b = (pin_state >> 5) & 0x01;
-  if (a == b) {
-    turns++;
-  } else {
-    turns--;
+      TCCR4A = (1 << COM4A1) | (1 << WGM40);
+      TCCR4B = (1 << WGM42) | (1 << CS41); // Prescaler = 8
+      OCR4A = voltage;
+      break;
   }
+
+  encoderOne = new Encoder(enc_a_pin, enc_b_pin);
+}
+
+int Motor::get_voltage() const {
+  return voltage;
+}
+
+void Motor::move_motor(int new_voltage) {
+  if (new_voltage < 0) new_voltage = 0;
+  if (new_voltage > 255) new_voltage = 255;
+
+  voltage = new_voltage;
+
+  switch (timer) {
+    case Timer::TIMER3A:
+      OCR3A = voltage;
+      break;
+    case Timer::TIMER4A:
+      OCR4A = voltage;
+      break;
+  }
+}
+
+int Motor::GetEncoderDist() {
+    return encoderOne->GetEncoderDist();
 }
