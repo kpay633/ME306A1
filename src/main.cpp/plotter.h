@@ -15,6 +15,7 @@ class Plotter {
         int current_pos[2];
         int target_pos[2];
         int delta_pos[2];
+        int left_boundary, right_boundary, top_boundary, bottom_boundary;
 };
 
 #endif // PLOTTER_H
