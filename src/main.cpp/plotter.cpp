@@ -63,6 +63,9 @@ void Plotter::home() {
         encoder_A.ResetEncoder();
         encoder_B.ResetEncoder();
         set_left_boundary(0);
+
+        motor_A.anticlockwise_retreat();
+        motor_B.anticlockwise_retreat();
     }
 
     while (!limit_switch_right.is_pressed()) {
@@ -83,6 +86,9 @@ void Plotter::home() {
         motor_B.stop();
 
         set_right_boundary((encoder_A.GetEncoderDist() + encoder_B.GetEncoderDist()) / 2);
+
+        motor_A.clockwise_retreat();
+        motor_B.clockwise_retreat();
     }
 
     while (!limit_switch_bottom.is_pressed()) {
@@ -106,6 +112,9 @@ void Plotter::home() {
         encoder_B.ResetEncoder();
 
         set_bottom_boundary(0);
+
+        motor_A.anticlockwise_retreat();
+        motor_B.clockwise_retreat();
     }
 
     while (!limit_switch_top.is_pressed()) {
@@ -126,6 +135,9 @@ void Plotter::home() {
         motor_B.stop();
 
         set_top_boundary((encoder_A.GetEncoderDist() - encoder_B.GetEncoderDist()) / 2);
+
+        motor_A.clockwise_retreat();
+        motor_B.anticlockwise_retreat();
     }
 
     while (!limit_switch_bottom.is_pressed()) {
@@ -135,7 +147,6 @@ void Plotter::home() {
     motor_A.stop();
     motor_B.stop();
 
-    // Move left to left limit
     while (!limit_switch_left.is_pressed()) {
         motor_A.clockwise();
         motor_B.clockwise();
@@ -143,8 +154,7 @@ void Plotter::home() {
     motor_A.stop();
     motor_B.stop();
 
-    // Set current_pos to (0,0)
-    current_pos[0] = get_left_boundary;
+    current_pos[0] = get_left_boundary();
     current_pos[1] = get_bottom_boundary();
 }
 
