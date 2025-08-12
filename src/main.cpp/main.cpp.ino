@@ -3,16 +3,17 @@
 // #include <thread>
 
 #include <avr/io.h>
+#include <Arduino.h>
 
 #include "motor.hpp"
 
 #define MOT1_PWM_PIN PB1
 #define MOT2_PWM_PIN PB2
 
-#define MOT1_ENCA_PIN PD1
-#define MOT1_ENCB_PIN PD2
-#define MOT2_ENCA_PIN PD3
-#define MOT2_ENCB_PIN PD4
+#define MOT1_ENCA_PIN PD0
+#define MOT1_ENCB_PIN PD1
+#define MOT2_ENCA_PIN PD2
+#define MOT2_ENCB_PIN PD3
 
 enum State {
     IDLE,
@@ -20,6 +21,7 @@ enum State {
     MOVING,
     FAULT
 };
+
 
 
 // void new_state(State);
@@ -31,14 +33,23 @@ enum State {
 
 int main() {
     //Plotter plotter;
+    Serial.begin(9600);
+    cli();
     Motor motor1(0, Timer::M1_TIMER3A, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN);  // voltage=0, timer=1, pwm_pin=PB1, enc_a=PD2, enc_b=PD3
     Motor motor2(0, Timer::M2_TIMER4A, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);  // another motor on Timer2 with different encoder pins
+    sei();
     // char key_in;
+
 
     
     while(1) {
-      motor1.move_motor(150);
-      motor2.move_motor(150);
+      motor1.move_motor(150, Direction::CW);
+      // _delay_ms(1000);
+      // motor1.stop_motor(Timer::M1_TIMER3A);
+      Serial.print("Encoder Value: ");
+
+      Serial.println(motor1.GetEncoderDist());
+      //motor2.move_motor(150);
       
     //     key_in = getchar();
     //     g_code_extractor(key_in);
@@ -61,8 +72,7 @@ int main() {
     //     // delay ???
     //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     // }
-    _delay_ms(1000);
-    return 0;
+   // _delay_ms(1000);
   }
 }
 
