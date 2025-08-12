@@ -8,33 +8,33 @@ Motor motor_A, motor_B;
 Encoder encoder_A(1), encoder_B(2);
 
 Plotter::Plotter() {
-    current_pos[0] = 0;
-    current_pos[1] = 0;
-    target_pos[0] = 0;
-    target_pos[1] = 0;
-    delta_pos[0] = 0;
-    delta_pos[1] = 0;
+    current_pos[0] = 0.0;
+    current_pos[1] = 0.0;
+    target_pos[0] = 0.0;
+    target_pos[1] = 0.0;
+    delta_pos[0] = 0.0;
+    delta_pos[1] = 0.0;
 }
 
-int *Plotter::get_current_pos() {
+float *Plotter::get_current_pos() {
     return current_pos;
 }
 
-void Plotter::set_current_pos(int pos[2]) {
+void Plotter::set_current_pos(float pos[2]) {
     current_pos[0] = pos[0];
     current_pos[1] = pos[1];
 }
 
-int *Plotter::get_target_pos() {
+float *Plotter::get_target_pos() {
     return target_pos;
 }
 
-void Plotter::set_target_pos(int pos[2]) {
+void Plotter::set_target_pos(float pos[2]) {
     target_pos[0] = pos[0];
     target_pos[1] = pos[1];
 }
 
-int *Plotter::calc_pos_error(int current_pos[2], int target_pos[2]) {
+float *Plotter::calc_pos_error(float current_pos[2], float target_pos[2]) {
     delta_pos[0] = target_pos[0] - current_pos[0];
     delta_pos[1] = target_pos[1] - current_pos[1];
     return delta_pos;
@@ -62,7 +62,7 @@ void Plotter::home() {
         motor_B.stop();
         encoder_A.ResetEncoder();
         encoder_B.ResetEncoder();
-        set_left_boundary(0);
+        set_left_boundary(0.0);
 
         motor_A.anticlockwise_retreat();
         motor_B.anticlockwise_retreat();
@@ -111,7 +111,7 @@ void Plotter::home() {
         encoder_A.ResetEncoder();
         encoder_B.ResetEncoder();
 
-        set_bottom_boundary(0);
+        set_bottom_boundary(0.0);
 
         motor_A.anticlockwise_retreat();
         motor_B.clockwise_retreat();
@@ -158,34 +158,34 @@ void Plotter::home() {
     current_pos[1] = get_bottom_boundary();
 }
 
-int Plotter::get_left_boundary() {
+float Plotter::get_left_boundary() {
     return left_boundary;
 }
 
-int Plotter::get_right_boundary() {
+float Plotter::get_right_boundary() {
     return right_boundary;
 }
 
-int Plotter::get_top_boundary() {
+float Plotter::get_top_boundary() {
     return top_boundary;
 }
 
-int Plotter::get_bottom_boundary() {
+float Plotter::get_bottom_boundary() {
     return bottom_boundary;
 }
 
-void Plotter::set_left_boundary(int boundary) {
+void Plotter::set_left_boundary(float boundary) {
     left_boundary = boundary;
 }
 
-void Plotter::set_right_boundary(int boundary) {
+void Plotter::set_right_boundary(float boundary) {
     right_boundary = boundary;
 }
 
-void Plotter::set_top_boundary(int boundary) {
+void Plotter::set_top_boundary(float boundary) {
     top_boundary = boundary;
 }
 
-void Plotter::set_bottom_boundary(int boundary) {
+void Plotter::set_bottom_boundary(float boundary) {
     bottom_boundary = boundary;
 }
