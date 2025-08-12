@@ -7,6 +7,10 @@ Limit_Switch limit_switch_left(&DDRB, &PINB, &PORTB, PB7), limit_switch_right(&D
 Motor motor_A, motor_B;
 Encoder encoder_A(1), encoder_B(2);
 
+int nominal_speed = 200; // Default speed for motors
+int approach_speed = 80; // Speed for approaching limit switches
+int retreat_time = 100; // Time to retreat after hitting a limit switch
+
 Plotter::Plotter() {
     current_pos[0] = 0.0;
     current_pos[1] = 0.0;
@@ -14,6 +18,10 @@ Plotter::Plotter() {
     target_pos[1] = 0.0;
     delta_pos[0] = 0.0;
     delta_pos[1] = 0.0;
+    left_boundary = 0.0;
+    right_boundary = 0.0;
+    top_boundary = 0.0;
+    bottom_boundary = 0.0;
 }
 
 float *Plotter::get_current_pos() {
@@ -45,18 +53,18 @@ void Plotter::home() {
     encoder_B.ResetEncoder();
     
     while (!limit_switch_left.is_pressed()) {
-        motor_A.clockwise();
-        motor_B.clockwise();
+        motor_A.clockwise(nominal_speed, 0);
+        motor_B.clockwise(nominal_speed, 0);
     }
 
     if (limit_switch_left.is_pressed()) {
         motor_A.stop();
         motor_B.stop();
-        motor_A.anticlockwise_retreat();
-        motor_B.anticlockwise_retreat();
+        motor_A.anticlockwise(nominal_speed, retreat_time);
+        motor_B.anticlockwise(nominal_speed, retreat_time);
         while (!limit_switch_left.is_pressed()) {
-            motor_A.clockwise_approach();
-            motor_B.clockwise_approach();
+            motor_A.clockwise(approach_speed, 0);
+            motor_B.clockwise(approach_speed, 0);
         }
         motor_A.stop();
         motor_B.stop();
@@ -64,46 +72,46 @@ void Plotter::home() {
         encoder_B.ResetEncoder();
         set_left_boundary(0.0);
 
-        motor_A.anticlockwise_retreat();
-        motor_B.anticlockwise_retreat();
+        motor_A.anticlockwise(nominal_speed, retreat_time);
+        motor_B.anticlockwise(nominal_speed, retreat_time);
     }
 
     while (!limit_switch_right.is_pressed()) {
-        motor_A.anticlockwise();
-        motor_B.anticlockwise();
+        motor_A.anticlockwise(nominal_speed, 0);
+        motor_B.anticlockwise(nominal_speed, 0);
     }
 
     if (limit_switch_right.is_pressed()) {
         motor_A.stop();
         motor_B.stop();
-        motor_A.clockwise_retreat();
-        motor_B.clockwise_retreat();
+        motor_A.clockwise(nominal_speed, retreat_time);
+        motor_B.clockwise(nominal_speed, retreat_time);
         while (!limit_switch_right.is_pressed()) {
-            motor_A.anticlockwise_approach();
-            motor_B.anticlockwise_approach();
+            motor_A.anticlockwise(approach_speed, 0);
+            motor_B.anticlockwise(approach_speed, 0);
         }
         motor_A.stop();
         motor_B.stop();
 
         set_right_boundary((encoder_A.GetEncoderDist() + encoder_B.GetEncoderDist()) / 2);
 
-        motor_A.clockwise_retreat();
-        motor_B.clockwise_retreat();
+        motor_A.clockwise(nominal_speed, retreat_time);
+        motor_B.clockwise(nominal_speed, retreat_time);
     }
 
     while (!limit_switch_bottom.is_pressed()) {
-        motor_A.clockwise();
-        motor_B.anticlockwise();
+        motor_A.clockwise(nominal_speed, 0);
+        motor_B.anticlockwise(nominal_speed, 0);
     }
 
     if (limit_switch_bottom.is_pressed()) {
         motor_A.stop();
         motor_B.stop();
-        motor_A.anticlockwise_retreat();
-        motor_B.clockwise_retreat();
+        motor_A.anticlockwise(nominal_speed, retreat_time);
+        motor_B.clockwise(nominal_speed, retreat_time);
         while (!limit_switch_bottom.is_pressed()) {
-            motor_A.clockwise_approach();
-            motor_B.anticlockwise_approach();
+            motor_A.clockwise(approach_speed, 0);
+            motor_B.anticlockwise(approach_speed, 0);
         }
         motor_A.stop();
         motor_B.stop();
@@ -113,43 +121,43 @@ void Plotter::home() {
 
         set_bottom_boundary(0.0);
 
-        motor_A.anticlockwise_retreat();
-        motor_B.clockwise_retreat();
+        motor_A.anticlockwise(nominal_speed, retreat_time);
+        motor_B.clockwise(nominal_speed, retreat_time);
     }
 
     while (!limit_switch_top.is_pressed()) {
-        motor_A.anticlockwise();
-        motor_B.clockwise();
+        motor_A.anticlockwise(nominal_speed, 0);
+        motor_B.clockwise(nominal_speed, 0);
     }
 
     if (limit_switch_top.is_pressed()) {
         motor_A.stop();
         motor_B.stop();
-        motor_A.clockwise_retreat();
-        motor_B.anticlockwise_retreat();
+        motor_A.clockwise(nominal_speed, retreat_time);
+        motor_B.anticlockwise(nominal_speed, retreat_time);
         while (!limit_switch_top.is_pressed()) {
-            motor_A.anticlockwise_approach();
-            motor_B.clockwise_approach();
+            motor_A.anticlockwise(approach_speed, 0);
+            motor_B.clockwise(approach_speed, 0);
         }
         motor_A.stop();
         motor_B.stop();
 
         set_top_boundary((encoder_A.GetEncoderDist() - encoder_B.GetEncoderDist()) / 2);
 
-        motor_A.clockwise_retreat();
-        motor_B.anticlockwise_retreat();
+        motor_A.clockwise(nominal_speed, retreat_time);
+        motor_B.anticlockwise(nominal_speed, retreat_time);
     }
 
     while (!limit_switch_bottom.is_pressed()) {
-        motor_A.clockwise();
-        motor_B.anticlockwise();
+        motor_A.clockwise(approach_speed, 0);
+        motor_B.anticlockwise(approach_speed, 0);
     }
     motor_A.stop();
     motor_B.stop();
 
     while (!limit_switch_left.is_pressed()) {
-        motor_A.clockwise();
-        motor_B.clockwise();
+        motor_A.clockwise(approach_speed, 0);
+        motor_B.clockwise(approach_speed, 0);
     }
     motor_A.stop();
     motor_B.stop();
