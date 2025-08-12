@@ -8,7 +8,7 @@ Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin
   DDRD &= ~(1 << enc_b_pin);
 
   switch (timer) {
-    case Timer::TIMER3A:
+    case Timer::M1_TIMER3A:
       // PE3 → OC3A → D5
       DDRE |= (1 << PE3);  // Set PE3 as output
 
@@ -18,7 +18,7 @@ Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin
       OCR3A = voltage;
       break;
 
-    case Timer::TIMER4A:
+    case Timer::M2_TIMER4A:
       // PH3 → OC4A → D6
       DDRH |= (1 << PH3);  // Set PH3 as output
 
@@ -29,9 +29,29 @@ Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin
   }
 }
 
-int Motor::get_voltage() const {
-  return voltage;
-}
+// int Motor::get_voltage() const {
+//   return voltage;
+// }
+
+
+// int read_encoder() {
+
+// }
+
+
+// void stop_motor(void) {
+//   switch (timer) {
+//     case Timer::M1_TIMER3A:
+//       OCR3A = 0;
+//       break;
+//     case Timer::M2_TIMER4A:
+//       OCR4A = 0;
+//       break;
+//   }
+// }
+
+
+
 
 void Motor::move_motor(int new_voltage) {
   if (new_voltage < 0) new_voltage = 0;
@@ -40,11 +60,17 @@ void Motor::move_motor(int new_voltage) {
   voltage = new_voltage;
 
   switch (timer) {
-    case Timer::TIMER3A:
+    case Timer::M1_TIMER3A:
       OCR3A = voltage;
       break;
-    case Timer::TIMER4A:
+    case Timer::M2_TIMER4A:
       OCR4A = voltage;
       break;
   }
 }
+
+
+// void fast_clockwise(int voltage, int ms);
+
+
+// void fast_anticlockwise(int voltage, int ms);
