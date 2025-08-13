@@ -7,13 +7,16 @@ Motor* Motor::motor2 = nullptr;
 Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin)
   : voltage(voltage), timer(timer), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
 
-  DDRD &= ~(1 << enc_a_pin);
-  DDRD &= ~(1 << enc_b_pin);
+  DDRD &= ~(1 << PD0);
+  DDRD &= ~(1 << PD1);
 
   switch (timer) {
     case Timer::M1_TIMER3A:
       // PE3 → OC3A → D5
       DDRE |= (1 << PE3);  // Set PE3 as output
+
+      DDRG |= (1 << PG5); //DIRECTION CONTROL ENABLED
+
 
       // Fast PWM, 8-bit: WGM3 = 0b0101
       TCCR3A = (1 << COM3A1) | (1 << WGM30);
@@ -27,8 +30,8 @@ Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin
       EICRA &= ~(1 << ISC01);
       EIMSK |= (1 << INT0);
 
-      pinA = enc_a_pin;
-      pinB = enc_b_pin;
+      pinA = PD0;
+      pinB = PD1;
 
       motor1 = this;
       break;
@@ -36,6 +39,9 @@ Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin
     case Timer::M2_TIMER4A:
       // PH3 → OC4A → D6
       DDRH |= (1 << PH3);  // Set PH3 as output
+
+      DDRH |= (1 << PH4); //DIR3ECTION CONTROL ENABLED
+
 
       TCCR4A = (1 << COM4A1) | (1 << WGM40);
       TCCR4B = (1 << WGM42) | (1 << CS41); // Prescaler = 8
@@ -61,26 +67,24 @@ Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin
 // }
 
 
-// int read_encoder() {
-
-// }
 
 
-// void stop_motor(void) {
-//   switch (timer) {
-//     case Timer::M1_TIMER3A:
-//       OCR3A = 0;
-//       break;
-//     case Timer::M2_TIMER4A:
-//       OCR4A = 0;
-//       break;
-//   }
-// }
+
+void Motor::stop_motor(Timer timer) {
+  switch (timer) {
+    case Timer::M1_TIMER3A:
+      OCR3A = 0;
+      break;
+    case Timer::M2_TIMER4A:
+      OCR4A = 0;
+      break;
+  }
+}
 
 
 
 
-void Motor::move_motor(int new_voltage) {
+void Motor::move_motor(int new_voltage, Direction direction, Timer timer) {
   if (new_voltage < 0) new_voltage = 0;
   if (new_voltage > 255) new_voltage = 255;
 
@@ -88,19 +92,34 @@ void Motor::move_motor(int new_voltage) {
 
   switch (timer) {
     case Timer::M1_TIMER3A:
+      if (direction == Direction::CCW) {
+        PORTG |= (1 << PG5); //PG5
+      } 
+      else if (direction == Direction::CW) {
+        PORTG &= ~(1 << PG5); // Clear PG5
+      }
+
       OCR3A = voltage;
       break;
+
     case Timer::M2_TIMER4A:
+      if (direction == Direction::CCW) {
+        PORTH |= (1 << PH4); //PG5
+      } 
+      else if (direction == Direction::CW) {
+        PORTH &= ~(1 << PH4); // Clear PG5
+      }
+
       OCR4A = voltage;
       break;
   }
 }
 
 
-// void fast_clockwise(int voltage, int ms);
+// void clockwise(int voltage, int ms);
 
 
-// void fast_anticlockwise(int voltage, int ms);
+// void anticlockwise(int voltage, int ms);
 
 int Motor::GetEncoderDist() {
   return int(double(encCount) * 13.5 * 3.14 / 172 / 24); // Convert counts to distance
