@@ -10,8 +10,8 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
   DDRD &= ~(1 << PD0);
   DDRD &= ~(1 << PD1);
 
-  switch (timer) {
-    case Timer::M1_TIMER3A:
+  switch (motorID) {
+    case MotorID::M1:
       // PE3 → OC3A → D5
       DDRE |= (1 << PE3);  // Set PE3 as output
 
@@ -36,7 +36,7 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
       motor1 = this;
       break;
 
-    case Timer::M2_TIMER4A:
+    case MotorID:M2:
       // PH3 → OC4A → D6
       DDRH |= (1 << PH3);  // Set PH3 as output
 

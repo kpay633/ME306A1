@@ -28,7 +28,7 @@ enum State {
 // State state = IDLE;
 
 int main() {
-    //Plotter plotter;
+    Plotter plotter;
     Serial.begin(9600);
     cli();
     Motor motor1(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN);  // voltage=0, timer=1, pwm_pin=PB1, enc_a=PD2, enc_b=PD3
