@@ -1,5 +1,5 @@
 //this is where code for the controller will go
-#include <avr/io.h>
+// #include <avr/io.h>
 #include "controller.hpp"
 
 // Constructor
@@ -11,7 +11,7 @@ Controller::Controller(float kp_x, float ki_x, float kd_x, float kp_y, float ki_
     this->Kd_x = kd_x;
     this->Kd_y = kd_y;
     this->Kv_x = kv_x;
-    this->Kv_y = ky_y;
+    this->Kv_y = kv_y;
     this->dt = timestep;
 }
 
@@ -52,20 +52,20 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
 
     switch (mode) {
         case controlMode::P:
-            float control_output_x = P_output_x;
-            float control_output_y = P_output_y;
+            control_output_x += P_output_x;
+            control_output_y += P_output_y;
             break;
         case controlMode::PI:
-            float control_output_x = P_output_x + I_output_x;
-            float control_output_y = P_output_y + I_output_y;
+            control_output_x += P_output_x + I_output_x;
+            control_output_y += P_output_y + I_output_y;
             break;
         case controlMode::PD:
-            float control_output_x = P_output_x + D_output_x;
-            float control_output_y = P_output_y + D_output_y;
+            control_output_x += P_output_x + D_output_x;
+            control_output_y += P_output_y + D_output_y;
             break;
         case controlMode::PID:
-            float control_output_x = P_output_x + I_output_x + D_output_x;
-            float control_output_y = P_output_y + I_output_y + D_output_y;
+            control_output_x += P_output_x + I_output_x + D_output_x;
+            control_output_y += P_output_y + I_output_y + D_output_y;
             break;
     }
 
@@ -73,11 +73,11 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
     this->motor_left_control_effort = control_output_x + control_output_y;
     this->motor_right_control_effort = control_output_x - control_output_y;
 
-    //Print the control efforts to the console fr debugging purposes
-    Serial.print("Left motor control effort: ");
-    Serial.println(motor_left_control_effort);
-    Serial.print("Right motor control effort: ");
-    Serial.println(motor_right_control_effort);
+    // //Print the control efforts to the console fr debugging purposes
+    // Serial.print("Left motor control effort: ");
+    // Serial.println(motor_left_control_effort);
+    // Serial.print("Right motor control effort: ");
+    // Serial.println(motor_right_control_effort);
 
 }
 

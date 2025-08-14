@@ -34,7 +34,7 @@ private:
 public:
 
     Controller(float kp_x, float ki_x, float kd_x, float kp_y, float ki_y, float kd_y, float kv_x, float kv_y, float timestep);
-    void calculateControlEffort(float current_error_x, float current_error_y, controlMode mode);
+    void calculateControlEffort(float current_error_x, float current_error_y, float v_desired_x, float v_desired_y, controlMode mode);
     void setGains(float kp_x, float ki_x, float kd_x, float kp_y, float ki_y, float kd_y);
     void reset();
     float getMotorLeftControlEffort() const;
