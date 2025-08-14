@@ -1,7 +1,3 @@
-//#include <iostream>
-// #include <chrono>
-// #include <thread>
-
 #include <avr/io.h>
 #include <Arduino.h>
 
@@ -35,16 +31,15 @@ int main() {
     //Plotter plotter;
     Serial.begin(9600);
     cli();
-    Motor motor1(0, Timer::M1_TIMER3A, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN);  // voltage=0, timer=1, pwm_pin=PB1, enc_a=PD2, enc_b=PD3
-    Motor motor2(0, Timer::M2_TIMER4A, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);  // another motor on Timer2 with different encoder pins
+    Motor motor1(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN);  // voltage=0, timer=1, pwm_pin=PB1, enc_a=PD2, enc_b=PD3
+    Motor motor2(0, MotorID::M2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);  // another motor on Timer2 with different encoder pins
+    
+    
     sei();
-    // char key_in;
-
-
     
     while(1) {
-      motor1.move_motor(200, Direction::CCW, Timer::M1_TIMER3A);
-      motor2.move_motor(200, Direction::CCW, Timer::M2_TIMER4A);
+      motor1.move_motor(MotorID::M1, 200, Direction::CCW);
+      motor2.move_motor(MotorID::M2, 200, Direction::CCW);
       
       _delay_ms(1000);
       Serial.print("Encoder 1 - ");
@@ -53,8 +48,8 @@ int main() {
       Serial.println(motor2.GetEncoderDist());
 
 
-      motor1.stop_motor(Timer::M1_TIMER3A);
-      motor2.stop_motor(Timer::M2_TIMER4A);
+      motor1.stop_motor(MotorID::M1);
+      motor2.stop_motor(MotorID::M2);
       
 
       _delay_ms(1000);
@@ -64,8 +59,8 @@ int main() {
       Serial.println(motor2.GetEncoderDist());
 
 
-      motor1.move_motor(200, Direction::CW, Timer::M1_TIMER3A);
-      motor2.move_motor(200, Direction::CW,  Timer::M2_TIMER4A);
+      motor1.move_motor(MotorID::M1, 200, Direction::CW);
+      motor2.move_motor(MotorID::M2, 200, Direction::CW);
 
       _delay_ms(1000);
 
@@ -75,7 +70,7 @@ int main() {
       Serial.print(" Encoder 2 - ");
       Serial.println(motor2.GetEncoderDist());
 
-      //motor2.move_motor(150);
+
       
     //     key_in = getchar();
     //     g_code_extractor(key_in);

@@ -4,7 +4,7 @@
 Motor* Motor::motor1 = nullptr;
 Motor* Motor::motor2 = nullptr;
 
-Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin)
+Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin)
   : voltage(voltage), timer(timer), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
 
   DDRD &= ~(1 << PD0);
@@ -70,12 +70,12 @@ Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin
 
 
 
-void Motor::stop_motor(Timer timer) {
-  switch (timer) {
-    case Timer::M1_TIMER3A:
+void Motor::stop_motor(MotorID motorID) {
+  switch (motorID) {
+    case MotorID::M1:
       OCR3A = 0;
       break;
-    case Timer::M2_TIMER4A:
+    case MotorID::M2:
       OCR4A = 0;
       break;
   }
@@ -84,30 +84,26 @@ void Motor::stop_motor(Timer timer) {
 
 
 
-void Motor::move_motor(int new_voltage, Direction direction, Timer timer) {
+void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
   if (new_voltage < 0) new_voltage = 0;
   if (new_voltage > 255) new_voltage = 255;
 
   voltage = new_voltage;
 
-  switch (timer) {
-    case Timer::M1_TIMER3A:
-      if (direction == Direction::CCW) {
-        PORTG |= (1 << PG5); //PG5
+  switch (motorID) {
+    case MotorID::M1:
+      if (direction == Direction::CCW) {PORTG |= (1 << PG5);
       } 
-      else if (direction == Direction::CW) {
-        PORTG &= ~(1 << PG5); // Clear PG5
+      else if (direction == Direction::CW) {PORTG &= ~(1 << PG5);
       }
 
       OCR3A = voltage;
       break;
 
-    case Timer::M2_TIMER4A:
-      if (direction == Direction::CCW) {
-        PORTH |= (1 << PH4); //PG5
+    case MotorID::M2:
+      if (direction == Direction::CCW) {PORTH |= (1 << PH4);
       } 
-      else if (direction == Direction::CW) {
-        PORTH &= ~(1 << PH4); // Clear PG5
+      else if (direction == Direction::CW) {PORTH &= ~(1 << PH4);
       }
 
       OCR4A = voltage;
@@ -117,8 +113,6 @@ void Motor::move_motor(int new_voltage, Direction direction, Timer timer) {
 
 
 // void clockwise(int voltage, int ms);
-
-
 // void anticlockwise(int voltage, int ms);
 
 int Motor::GetEncoderDist() {

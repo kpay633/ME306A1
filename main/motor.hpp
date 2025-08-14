@@ -3,9 +3,9 @@
 
 #include <Arduino.h>
 
-enum class Timer {
-  M1_TIMER3A,  // PE3 → OC3A → D5
-  M2_TIMER4A   // PH3 → OC4A → D6
+enum class MotorID {
+  M1,  // PE3 → OC3A → D5. _TIMER3A
+  M2   // PH3 → OC4A → D6 _TIMER4A
 };
 
 enum class Direction {
@@ -28,12 +28,12 @@ class Motor {
     volatile uint16_t encCount;
 
   public:
-    Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin);
+    Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin);
 
-    // int get_voltage() const;
+    int get_voltage() const;
     
-    void stop_motor(Timer timer);
-    void move_motor(int voltage, Direction direction, Timer timer);
+    void stop_motor(MotorID motorID);
+    void move_motor(MotorID motorID, int voltage, Direction direction);
 
 
     // void clockwise(int voltage, int ms);
