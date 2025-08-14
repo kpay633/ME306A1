@@ -1,11 +1,17 @@
 #include "plotter.h"
 #include "limit_switch.hpp"
-#include "motor.h"
-#include "encoder.h"
+#include "motor.hpp"
+
+#define MOT1_PWM_PIN PB1
+#define MOT2_PWM_PIN PB2
+
+#define MOT1_ENCA_PIN PD0
+#define MOT1_ENCB_PIN PD1
+#define MOT2_ENCA_PIN PD2
+#define MOT2_ENCB_PIN PD3
 
 Limit_Switch limit_switch_left(&DDRB, &PINB, &PORTB, PB7), limit_switch_right(&DDRB, &PINB, &PORTB, PB6), limit_switch_top(&DDRB, &PINB, &PORTB, PB4), limit_switch_bottom(&DDRB, &PINB, &PORTB, PB5);
-Motor motor_A, motor_B;
-Encoder encoder_A(1), encoder_B(2);
+Motor motor_A(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN), motor_B(0, MotorID::M2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);
 
 int nominal_speed = 200; // Default speed for motors
 int approach_speed = 80; // Speed for approaching limit switches
@@ -49,118 +55,130 @@ float *Plotter::calc_pos_error(float current_pos[2], float target_pos[2]) {
 }
 
 void Plotter::home() {
-    encoder_A.ResetEncoder();
-    encoder_B.ResetEncoder();
-    
+    motor_A.ResetEncoder();
+    motor_B.ResetEncoder();
+
     while (!limit_switch_left.is_pressed()) {
-        motor_A.clockwise(nominal_speed, 0);
-        motor_B.clockwise(nominal_speed, 0);
+        motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CW);
+        motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CW);
     }
 
-    if (limit_switch_left.is_pressed()) {
-        motor_A.stop();
-        motor_B.stop();
-        motor_A.anticlockwise(nominal_speed, retreat_time);
-        motor_B.anticlockwise(nominal_speed, retreat_time);
-        while (!limit_switch_left.is_pressed()) {
-            motor_A.clockwise(approach_speed, 0);
-            motor_B.clockwise(approach_speed, 0);
-        }
-        motor_A.stop();
-        motor_B.stop();
-        encoder_A.ResetEncoder();
-        encoder_B.ResetEncoder();
-        set_left_boundary(0.0);
+    motor_A.stop_motor(MotorID::M1);
+    motor_B.stop_motor(MotorID::M2);
 
-        motor_A.anticlockwise(nominal_speed, retreat_time);
-        motor_B.anticlockwise(nominal_speed, retreat_time);
-    }
+    // if (limit_switch_left.is_pressed()) {
+    //     motor_A.stop_motor(MotorID::M1);
+    //     motor_B.stop_motor(MotorID::M2);
+    //     motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CCW);
+    //     motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+    //     while (!limit_switch_left.is_pressed()) {
+    //         motor_A.clockwise(approach_speed, 0);
+    //         motor_B.clockwise(approach_speed, 0);
+    //     }
+    //     motor_A.stop_motor(MotorID::M1);
+    //     motor_B.stop_motor(MotorID::M2);
+    //     motor_A.ResetEncoder();
+    //     motor_B.ResetEncoder();
+    //     set_left_boundary(0.0);
+
+    //     motor_A.anticlockwise(nominal_speed, retreat_time);
+    //     motor_B.anticlockwise(nominal_speed, retreat_time);
+    // }
 
     while (!limit_switch_right.is_pressed()) {
-        motor_A.anticlockwise(nominal_speed, 0);
-        motor_B.anticlockwise(nominal_speed, 0);
+        motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CCW);
+        motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CCW);
     }
 
-    if (limit_switch_right.is_pressed()) {
-        motor_A.stop();
-        motor_B.stop();
-        motor_A.clockwise(nominal_speed, retreat_time);
-        motor_B.clockwise(nominal_speed, retreat_time);
-        while (!limit_switch_right.is_pressed()) {
-            motor_A.anticlockwise(approach_speed, 0);
-            motor_B.anticlockwise(approach_speed, 0);
-        }
-        motor_A.stop();
-        motor_B.stop();
+    motor_A.stop_motor(MotorID::M1);
+    motor_B.stop_motor(MotorID::M2);
 
-        set_right_boundary((encoder_A.GetEncoderDist() + encoder_B.GetEncoderDist()) / 2);
+    // if (limit_switch_right.is_pressed()) {
+    //     motor_A.stop_motor(MotorID::M1);
+    //     motor_B.stop_motor(MotorID::M2);
+    //     motor_A.clockwise(nominal_speed, retreat_time);
+    //     motor_B.clockwise(nominal_speed, retreat_time);
+    //     while (!limit_switch_right.is_pressed()) {
+    //         motor_A.anticlockwise(approach_speed, 0);
+    //         motor_B.anticlockwise(approach_speed, 0);
+    //     }
+    //     motor_A.stop_motor(MotorID::M1);
+    //     motor_B.stop_motor(MotorID::M2);
 
-        motor_A.clockwise(nominal_speed, retreat_time);
-        motor_B.clockwise(nominal_speed, retreat_time);
-    }
+    //     set_right_boundary((motor_A.GetEncoderDist() + motor_B.GetEncoderDist()) / 2);
+
+    //     motor_A.clockwise(nominal_speed, retreat_time);
+    //     motor_B.clockwise(nominal_speed, retreat_time);
+    // }
 
     while (!limit_switch_bottom.is_pressed()) {
-        motor_A.clockwise(nominal_speed, 0);
-        motor_B.anticlockwise(nominal_speed, 0);
+        motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CW);
+        motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CCW);
     }
 
-    if (limit_switch_bottom.is_pressed()) {
-        motor_A.stop();
-        motor_B.stop();
-        motor_A.anticlockwise(nominal_speed, retreat_time);
-        motor_B.clockwise(nominal_speed, retreat_time);
-        while (!limit_switch_bottom.is_pressed()) {
-            motor_A.clockwise(approach_speed, 0);
-            motor_B.anticlockwise(approach_speed, 0);
-        }
-        motor_A.stop();
-        motor_B.stop();
+    motor_A.stop_motor(MotorID::M1);
+    motor_B.stop_motor(MotorID::M2);
 
-        encoder_A.ResetEncoder();
-        encoder_B.ResetEncoder();
+    // if (limit_switch_bottom.is_pressed()) {
+    //     motor_A.stop_motor(MotorID::M1);
+    //     motor_B.stop_motor(MotorID::M2);
+    //     motor_A.anticlockwise(nominal_speed, retreat_time);
+    //     motor_B.clockwise(nominal_speed, retreat_time);
+    //     while (!limit_switch_bottom.is_pressed()) {
+    //         motor_A.clockwise(approach_speed, 0);
+    //         motor_B.anticlockwise(approach_speed, 0);
+    //     }
+    //     motor_A.stop_motor(MotorID::M1);
+    //     motor_B.stop_motor(MotorID::M2);
 
-        set_bottom_boundary(0.0);
+    //     motor_A.ResetEncoder();
+    //     motor_B.ResetEncoder();
 
-        motor_A.anticlockwise(nominal_speed, retreat_time);
-        motor_B.clockwise(nominal_speed, retreat_time);
-    }
+    //     set_bottom_boundary(0.0);
+
+    //     motor_A.anticlockwise(nominal_speed, retreat_time);
+    //     motor_B.clockwise(nominal_speed, retreat_time);
+    // }
 
     while (!limit_switch_top.is_pressed()) {
-        motor_A.anticlockwise(nominal_speed, 0);
-        motor_B.clockwise(nominal_speed, 0);
+        motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CCW);
+        motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CW);
     }
 
-    if (limit_switch_top.is_pressed()) {
-        motor_A.stop();
-        motor_B.stop();
-        motor_A.clockwise(nominal_speed, retreat_time);
-        motor_B.anticlockwise(nominal_speed, retreat_time);
-        while (!limit_switch_top.is_pressed()) {
-            motor_A.anticlockwise(approach_speed, 0);
-            motor_B.clockwise(approach_speed, 0);
-        }
-        motor_A.stop();
-        motor_B.stop();
+    motor_A.stop_motor(MotorID::M1);
+    motor_B.stop_motor(MotorID::M2);
 
-        set_top_boundary((encoder_A.GetEncoderDist() - encoder_B.GetEncoderDist()) / 2);
+    // if (limit_switch_top.is_pressed()) {
+    //     motor_A.stop_motor(MotorID::M1);
+    //     motor_B.stop_motor(MotorID::M2);
+    //     motor_A.clockwise(nominal_speed, retreat_time);
+    //     motor_B.anticlockwise(nominal_speed, retreat_time);
+    //     while (!limit_switch_top.is_pressed()) {
+    //         motor_A.anticlockwise(approach_speed, 0);
+    //         motor_B.clockwise(approach_speed, 0);
+    //     }
+    //     motor_A.stop_motor(MotorID::M1);
+    //     motor_B.stop_motor(MotorID::M2);
 
-        motor_A.clockwise(nominal_speed, retreat_time);
-        motor_B.anticlockwise(nominal_speed, retreat_time);
-    }
+    //     set_top_boundary((motor_A.GetEncoderDist() - motor_B.GetEncoderDist()) / 2);
 
-    while (!limit_switch_bottom.is_pressed()) {
-        motor_A.clockwise(approach_speed, 0);
-        motor_B.anticlockwise(approach_speed, 0);
-    }
-    motor_A.stop();
-    motor_B.stop();
+    //     motor_A.clockwise(nominal_speed, retreat_time);
+    //     motor_B.anticlockwise(nominal_speed, retreat_time);
+    // }
 
-    while (!limit_switch_left.is_pressed()) {
-        motor_A.clockwise(approach_speed, 0);
-        motor_B.clockwise(approach_speed, 0);
-    }
-    motor_A.stop();
-    motor_B.stop();
+    // while (!limit_switch_bottom.is_pressed()) {
+    //     motor_A.move_motor(MotorID::M1, approach_speed, Direction::CW);
+    //     motor_B.move_motor(MotorID::M2, approach_speed, Direction::CCW);
+    // }
+    // motor_A.stop_motor(MotorID::M1);
+    // motor_B.stop_motor(MotorID::M2);
+
+    // while (!limit_switch_left.is_pressed()) {
+    //     motor_A.move_motor(MotorID::M1, approach_speed, Direction::CW);
+    //     motor_B.move_motor(MotorID::M2, approach_speed, Direction::CW);
+    // }
+    // motor_A.stop_motor(MotorID::M1);
+    // motor_B.stop_motor(MotorID::M2);
 
     current_pos[0] = get_left_boundary();
     current_pos[1] = get_bottom_boundary();
