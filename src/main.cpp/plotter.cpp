@@ -1,9 +1,9 @@
 #include "plotter.h"
-#include "limit_switch.h"
+#include "limit_switch.hpp"
 #include "motor.h"
 #include "encoder.h"
 
-Limit_Switch limit_switch_left, limit_switch_right, limit_switch_top, limit_switch_bottom;
+Limit_Switch limit_switch_left(&DDRB, &PINB, &PORTB, PB7), limit_switch_right(&DDRB, &PINB, &PORTB, PB6), limit_switch_top(&DDRB, &PINB, &PORTB, PB4), limit_switch_bottom(&DDRB, &PINB, &PORTB, PB5);
 Motor motor_A, motor_B;
 Encoder encoder_A, encoder_B;
 
