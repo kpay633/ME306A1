@@ -5,7 +5,7 @@ Motor* Motor::motor1 = nullptr;
 Motor* Motor::motor2 = nullptr;
 
 Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin)
-  : voltage(voltage), timer(timer), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
+  : voltage(voltage), motorID(motorID), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
 
   DDRD &= ~(1 << PD0);
   DDRD &= ~(1 << PD1);
