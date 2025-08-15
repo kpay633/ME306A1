@@ -19,7 +19,6 @@ enum State {
 };
 
 
-
 // void new_state(State);
 // void doIdle(Plotter&);
 // void doHoming(Plotter&);
@@ -46,7 +45,6 @@ int main() {
       Serial.print(motor1.GetEncoderDist());
       Serial.print(" Encoder 2 - ");
       Serial.println(motor2.GetEncoderDist());
-
 
       motor1.stop_motor(MotorID::M1);
       motor2.stop_motor(MotorID::M2);
