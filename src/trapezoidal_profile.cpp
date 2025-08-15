@@ -1,4 +1,3 @@
-TRAPEZOIDALPROFILE.CPP
  
 #include "trapezoidal_profile.hpp"
 #include <cmath>
