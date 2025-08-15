@@ -20,7 +20,7 @@ enum State {
 };
 struct GCode {
     
-}
+};
 
 void new_state(State);
 void GCodeParser(*GCode);
