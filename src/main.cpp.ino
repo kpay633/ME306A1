@@ -8,7 +8,8 @@
 // #include "motor.hpp"
 #include "gcodeParser.hpp"
 
-volatile unsigned long sys_ticks = 0;  // increments every 1ms
+volatile unsigned long sys_ticks = 0;  // should increment every 1ms
+State global_state;
 
 enum class State {
     IDLE,
@@ -17,13 +18,13 @@ enum class State {
     FAULT
 };
 
-// void new_state(State);
-// void doIdle(Plotter&);
-// void doHoming(Plotter&);
-// void doMoving(Plotter&);
-// void doFault(Plotter&);
+void new_state(State);
+void doIdle(Plotter&);
+void doHoming(Plotter&);
+void doMoving(Plotter&);
+void doFault(Plotter&);
+GCodeCommand parse_input();
 
-State state = State::IDLE;
 
 
 int main() {
@@ -31,115 +32,95 @@ int main() {
   timer1_init();
   sei();
 
-//-----G-CODE PARSER---------------------------------------------------------------------------------------------------------------
+  global_state = State::IDLE;
+  GCodeCommand cmd;
+  // Plotter plotter; 
+
+
   init();                  // needed when bypassing Arduino's default main
   Serial.begin(9600);
   while (!Serial) { }      // wait for USB serial connection
-  delay(100);              // small delay to stabilize
+  delay(100); 
 
-  Serial.println("Hello from Arduino main! Serial is working.");
-  GCodeParser parser;
-  GCodeCommand command; 
-  char user_input[64];     // buffer for one command line
-  size_t idx = 0;
 
   while (1) {
-    // Check if serial has data
-    while (Serial.available() > 0) {
-      char c = Serial.read();
+    cmd = parse_input();  // will return NONE if no new input
 
-      if (c == '\n' || c == '\r') {   // end of command
-        if (idx > 0) {              // only parse if buffer not empty
-          user_input[idx] = '\0'; // terminate C string
-          command = parser.parseLine(user_input);
+    switch(global_state) {
+      case State::IDLE:
+        if(cmd.type == CommandType::G1) new_state(State::MOVING);
+        else if(cmd.type == CommandType::G28) new_state(State::HOMING);
+        else if(cmd.type == CommandType::M999) doFault(plotter);
+        doIdle(plotter);
+        break;
 
-          Serial.print("Results: "); 
-          Serial.print((int)command.type);
-          Serial.print(", ");
-          Serial.print(command.x);
-          Serial.print(", ");
-          Serial.println(command.y);
+      case State::HOMING:
+        doHoming(plotter);
+        break;
 
-          idx = 0;                // reset for next command
-        } else {
-          // ignore stray CR/LF when buffer is empty
-        }
-      } else {
-        if (idx < sizeof(user_input) - 1) {
-            user_input[idx++] = c;  // add char to buffer
-        }
-      }
+      case State::MOVING:
+        doMoving(plotter);
+        break;
+
+      case State::FAULT:
+        doFault(plotter);
+        break;
     }
-    delay(10);  // give USB stack time to process keyboard input
   }
+
+
+  delay(100);
+
+}
+
+void new_state(State s) {
+    global_state = s;
+    std::cout << "Transitioning to state: " << s << "\n";
+}
+void doIdle(Plotter& plotter) {
+    std::cout << "Idle ..." << "\n";
+}
+void doHoming(Plotter& plotter) {
+    plotter.home();
+    new_state(IDLE);
+}
+void doMoving(Plotter& plotter) {
+  plotter.position(x, y);
+}
+void doFault(Plotter& plotter) {
+  //print an error message and stop everything. 
 }
 
 
 
 
+GCodeCommand parse_input() {
+  Serial.println("Hello from Arduino main! Serial is working.");
+  GCodeParser parser;
+  GCodeCommand command; 
+  char user_input[64];     // buffer for one command line
+  size_t idx = 0;
+  
+  while (Serial.available() > 0) {
+    char c = Serial.read();
 
+    if (c == '\n' || c == '\r') {   // end of command
+      if (idx > 0) {              // only parse if buffer not empty
+        user_input[idx] = '\0'; // terminate C string
+        command = parser.parseLine(user_input);
 
-
-
-
-
-
-
-
-
-
-
-  //     key_in = getchar();
-  //     g_code_extractor(key_in);
-  //     switch(state) {
-  //         case IDLE:
-  //             if(key_in == *(G1)) new_state(State::HOMING);
-  //             if(key_in == *(G28)) new_state(State::MOVING);
-  //             doIdle(plotter);
-  //             break;
-  //         case HOMING:
-  //             doHoming(plotter);
-  //             break;
-  //         case MOVING:
-  //             doMoving(plotter);  // <--- motor control loop here
-  //             break;
-  //         case FAULT:
-  //             doFault(plotter);
-  //             break;
-  //     }
-  //     // delay ???
-  //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  // }
-  //  _delay_ms(1000);
-
-//     }
-// }
-
-// void new_state(State s) {
-//     state = s;
-//     std::cout << "Transitioning to state: " << s << "\n";
-// }
-// void doIdle(Plotter& plotter) {
-//     std::cout << "Idle ..." << "\n";
-// }
-// void doHoming(Plotter& plotter) {
-//     plotter.home();
-//     new_state(IDLE);
-// }
-// void doMoving(Plotter& plotter) {
-//   plotter.position(x, y);
-// }
-// void doFault(Plotter& plotter) {
-//   //print an error message and stop everything. 
-// }
-
-
-
-
-
-
-
-
+        Serial.print("Results: "); Serial.print((int)command.type); Serial.print(", "); Serial.print(command.x); Serial.print(", "); Serial.println(command.y);
+        idx = 0;                // reset for next command
+      } else {
+        // ignore stray CR/LF when buffer is empty
+      }
+    } else {
+      if (idx < sizeof(user_input) - 1) {
+        user_input[idx++] = c;  // add char to buffer
+      }
+    } 
+  }
+}
 
 
 
