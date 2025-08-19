@@ -6,7 +6,8 @@
 enum class CommandType { //enum class can only contain enumerators, not any other field
     NONE,
     G1,   // Move
-    G28   // Home
+    G28,   // Home
+    M999
 };
 
 struct GCodeCommand { //must be a struct as has specific types. 
@@ -29,3 +30,6 @@ class GCodeParser {
     int getCommand(); // If hasCommand, will get command in main and then act on that. 
     GCodeCommand parseLine(const char* user_input);
 };
+
+
+#endif // GCODEPARSER_HPP
