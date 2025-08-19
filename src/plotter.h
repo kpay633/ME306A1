@@ -1,6 +1,13 @@
 #ifndef PLOTTER_H
 #define PLOTTER_H
 
+enum class Target {
+  LEFT,
+  RIGHT,
+  UP,
+  DOWN
+};
+
 class Plotter {
     public:
         Plotter();
@@ -9,7 +16,13 @@ class Plotter {
         float *get_target_pos();
         void set_target_pos(float pos[2]);
         float *calc_pos_error(float current[2], float target[2]);
+        void MoveMotorTime(int voltage, Target target, int time);
+        void MoveMotors(int voltage, Target target);
+        void StopMotors();
+        void ResetEncoders();
+        static void IncrementMotorTimer();
         void home();
+        void test();
         void move_to_target(float x, float y, float speed);
         float get_left_boundary();
         float get_right_boundary();
@@ -19,12 +32,14 @@ class Plotter {
         void set_right_boundary(float boundary);
         void set_top_boundary(float boundary);
         void set_bottom_boundary(float boundary);
+        static volatile uint32_t motor_timer;
 
     private:
         float current_pos[2];
         float target_pos[2];
         float delta_pos[2];
         float left_boundary, right_boundary, top_boundary, bottom_boundary;
+        
 };
 
 #endif // PLOTTER_H

@@ -7,8 +7,8 @@ Motor* Motor::motor2 = nullptr;
 Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin)
   : voltage(voltage), motorID(motorID), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
 
-  DDRD &= ~(1 << PD0);
-  DDRD &= ~(1 << PD1);
+  DDRD &= ~(1 << enc_a_pin);
+  DDRD &= ~(1 << enc_b_pin);
 
   switch (motorID) {
     case MotorID::M1:
@@ -23,20 +23,20 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
       TCCR3B = (1 << WGM32) | (1 << CS31); // Prescaler = 8
       OCR3A = voltage;
 
-      DDRD &= ~(1 << PD1); //Set pins 20 and 21 as inputs for encoder signals
-      DDRD &= ~(1 << PD0);
+      DDRE &= ~(1 << enc_a_pin); //Set pins 20 and 21 as inputs for encoder signals
+      DDRE &= ~(1 << enc_b_pin);
 
-      EICRA |= (1 << ISC00); //Enable INT0 on rising edge
-      EICRA &= ~(1 << ISC01);
-      EIMSK |= (1 << INT0);
+      EICRB |= (1 << ISC40); //Enable INT0 on rising edge
+      EICRB &= ~(1 << ISC41);
+      EIMSK |= (1 << INT4);
 
-      pinA = PD0;
-      pinB = PD1;
+      pinA = enc_a_pin;
+      pinB = enc_b_pin;
 
       motor1 = this;
       break;
 
-    case MotorID:M2:
+    case MotorID::M2:
       // PH3 → OC4A → D6
       DDRH |= (1 << PH3);  // Set PH3 as output
 
@@ -47,12 +47,12 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
       TCCR4B = (1 << WGM42) | (1 << CS41); // Prescaler = 8
       OCR4A = voltage;
 
-      DDRD &= ~(1 << PD3); //Set pins 18 and 19 as inputs for encoder signals
-      DDRD &= ~(1 << PD2);
+      DDRE &= ~(1 << enc_a_pin); //Set pins 18 and 19 as inputs for encoder signals
+      DDRE &= ~(1 << enc_b_pin);
 
-      EICRA |= (1 << ISC20); //Enable INT2 on rising edge
-      EICRA &= ~(1 << ISC21);
-      EIMSK |= (1 << INT2);
+      EICRB |= (1 << ISC50); //Enable INT2 on rising edge
+      EICRB &= ~(1 << ISC51);
+      EIMSK |= (1 << INT5);
 
       pinA = enc_a_pin;
       pinB = enc_b_pin;
@@ -85,30 +85,42 @@ void Motor::stop_motor(MotorID motorID) {
 
 
 void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
-  if (new_voltage < 0) new_voltage = 0;
-  if (new_voltage > 255) new_voltage = 255;
+  if (!disabled){
+    if (new_voltage < 0) new_voltage = 0;
+    if (new_voltage > 255) new_voltage = 255;
 
-  voltage = new_voltage;
+    voltage = new_voltage;
 
-  switch (motorID) {
-    case MotorID::M1:
-      if (direction == Direction::CCW) {PORTG |= (1 << PG5);
-      } 
-      else if (direction == Direction::CW) {PORTG &= ~(1 << PG5);
-      }
+    switch (motorID) {
+      case MotorID::M1:
+        if (direction == Direction::CCW) {PORTG |= (1 << PG5);
+        } 
+        else if (direction == Direction::CW) {PORTG &= ~(1 << PG5);
+        }
 
-      OCR3A = voltage;
-      break;
+        OCR3A = voltage;
+        break;
 
-    case MotorID::M2:
-      if (direction == Direction::CCW) {PORTH |= (1 << PH4);
-      } 
-      else if (direction == Direction::CW) {PORTH &= ~(1 << PH4);
-      }
+      case MotorID::M2:
+        if (direction == Direction::CCW) {PORTH |= (1 << PH4);
+        } 
+        else if (direction == Direction::CW) {PORTH &= ~(1 << PH4);
+        }
 
-      OCR4A = voltage;
-      break;
+        OCR4A = voltage;
+        break;
+    }
   }
+}
+
+void Motor::DisableMotor(){
+  disabled = true;
+  stop_motor(MotorID::M1);
+  stop_motor(MotorID::M2);
+}
+
+void Motor::EnableMotor(){
+  disabled = false;
 }
 
 
@@ -116,17 +128,24 @@ void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
 // void anticlockwise(int voltage, int ms);
 
 int Motor::GetEncoderDist() {
-  return int(double(encCount) * 13.5 * 3.14 / 172 / 24); // Convert counts to distance
+  // Serial.print("encoder value ");
+  // Serial.println(encCount);
+  return encCount; 
 }
 
 void Motor::ResetEncoder() {
+  Serial.println("Resetting encoder");
   encCount = 0; // Reset the encoder count to zero
 }
 
+void Motor::ResetEncoder(int set_value){
+  encCount = set_value;
+}
+
 void Motor::incrementEncoder() {
-  uint8_t pin_state = PIND;
-  uint8_t a = (pin_state >> pinA) & 0x01;
-  uint8_t b = (pin_state >> pinB) & 0x01;
+  uint8_t pin_state = PINE;
+  uint8_t a = (pin_state & (1 << PE4)) ? 1 : 0;
+  uint8_t b = (pin_state & (1 << PE0)) ? 1 : 0;
 
   if (a == b) {
     encCount++;
@@ -135,13 +154,13 @@ void Motor::incrementEncoder() {
   }
 }
 
-ISR(INT0_vect) {
+ISR(INT4_vect) {
   if(Motor::motor1 != nullptr) {
     Motor::motor1->incrementEncoder();
   }
 }
 
-ISR(INT2_vect) {
+ISR(INT5_vect) {
   if(Motor::motor2 != nullptr) {
     Motor::motor2->incrementEncoder();
   }

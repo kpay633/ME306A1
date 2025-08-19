@@ -2,6 +2,8 @@
 #include <Arduino.h>
 
 #include "motor.hpp"
+#include "plotter.h"
+#include "limit_switch.hpp"
 
 #define MOT1_PWM_PIN PB1
 #define MOT2_PWM_PIN PB2
@@ -26,47 +28,46 @@ enum State {
 // void doFault(Plotter&);
 // State state = IDLE;
 
+  Plotter plotter;
+
 int main() {
-    Plotter plotter;
     Serial.begin(9600);
-    cli();
-    Motor motor1(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN);  // voltage=0, timer=1, pwm_pin=PB1, enc_a=PD2, enc_b=PD3
-    Motor motor2(0, MotorID::M2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);  // another motor on Timer2 with different encoder pins
-    
-    
-    sei();
-    
-    while(1) {
-      motor1.move_motor(MotorID::M1, 200, Direction::CCW);
-      motor2.move_motor(MotorID::M2, 200, Direction::CCW);
-      
-      _delay_ms(1000);
-      Serial.print("Encoder 1 - ");
-      Serial.print(motor1.GetEncoderDist());
-      Serial.print(" Encoder 2 - ");
-      Serial.println(motor2.GetEncoderDist());
+    pinMode(13, OUTPUT);
+    digitalWrite(13, HIGH);
+    plotter.home();
 
-      motor1.stop_motor(MotorID::M1);
-      motor2.stop_motor(MotorID::M2);
+    
+    // while(1) {
+    //   motor1.move_motor(MotorID::M1, 200, Direction::CCW);
+    //   motor2.move_motor(MotorID::M2, 200, Direction::CCW);
+      
+    //   _delay_ms(1000);
+    //   Serial.print("Encoder 1 - ");
+    //   Serial.print(motor1.GetEncoderDist());
+    //   Serial.print(" Encoder 2 - ");
+    //   Serial.println(motor2.GetEncoderDist());
+
+    //   motor1.stop_motor(MotorID::M1);
+    //   motor2.stop_motor(MotorID::M2);
       
 
-      _delay_ms(1000);
-      Serial.print("Encoder 1 - ");
-      Serial.print(motor1.GetEncoderDist());
-      Serial.print(" Encoder 2 - ");
-      Serial.println(motor2.GetEncoderDist());
+    //   _delay_ms(1000);
+    //   Serial.print("Encoder 1 - ");
+    //   Serial.print(motor1.GetEncoderDist());
+    //   Serial.print(" Encoder 2 - ");
+    //   Serial.println(motor2.GetEncoderDist());
 
 
-      motor1.move_motor(MotorID::M1, 200, Direction::CW);
-      motor2.move_motor(MotorID::M2, 200, Direction::CW);
+    //   motor1.move_motor(MotorID::M1, 200, Direction::CW);
+    //   motor2.move_motor(MotorID::M2, 200, Direction::CW);
 
-      _delay_ms(1000);
+    //   _delay_ms(1000);
 
 
-      Serial.print("Encoder 1 - ");
-      Serial.print(motor1.GetEncoderDist());
-      Serial.print(" Encoder 2 - ");
-      Serial.println(motor2.GetEncoderDist());
+    //   Serial.print("Encoder 1 - ");
+    //   Serial.print(motor1.GetEncoderDist());
+    //   Serial.print(" Encoder 2 - ");
+    //   Serial.println(motor2.GetEncoderDist());
 
 
       
@@ -93,7 +94,7 @@ int main() {
     // }
    // _delay_ms(1000);
   }
-}
+// }
 
 // void new_state(State s) {
 //     state = s;
