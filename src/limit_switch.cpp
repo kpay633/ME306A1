@@ -20,7 +20,7 @@ Limit_Switch::Limit_Switch(){
     DDRD &= ~((1 << PD2) | (1 << PD3)); //(1 << PD0) | (1 << PD1) | 
 
     //Enable internal pull-ups on pins 18-21
-    PORTD |= (1 << PD2) | (1 << PD3); //(1 << PD0) | (1 << PD1) |
+    // PORTD |= (1 << PD2) | (1 << PD3); //(1 << PD0) | (1 << PD1) |
 
     //Configure INT0-INT3 to trigger on rising edge
     EICRA |= (1 << ISC20) | (1 << ISC21) | (1 << ISC30) | (1 << ISC31); //(1 << ISC00) | (1 << ISC01) | (1 << ISC10) | (1 << ISC11) | 
@@ -38,10 +38,10 @@ bool Limit_Switch::is_pressed(switchPos switch_pos) {
     // Returns false if the pin is high (not pressed)
 
     switch (switch_pos) {
-        case switchPos::Left:   return !(PIND & (1 << PD2)); // pin 19
-        case switchPos::Right:  return !(PIND & (1 << PD2)); // pin 19
-        case switchPos::Top:    return !(PIND & (1 << PD3)); // pin 18
-        case switchPos::Bottom: return !(PIND & (1 << PD3)); // pin 18
+        case switchPos::Left:   return (PIND & (1 << PD2)); // pin 19
+        case switchPos::Right:  return (PIND & (1 << PD2)); // pin 19
+        case switchPos::Top:    return (PIND & (1 << PD3)); // pin 18
+        case switchPos::Bottom: return (PIND & (1 << PD3)); // pin 18
         default: return false;
     }
 }

@@ -66,10 +66,6 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
 //   return voltage;
 // }
 
-
-
-
-
 void Motor::stop_motor(MotorID motorID) {
   switch (motorID) {
     case MotorID::M1:
@@ -80,9 +76,6 @@ void Motor::stop_motor(MotorID motorID) {
       break;
   }
 }
-
-
-
 
 void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
   if (!disabled){

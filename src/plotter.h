@@ -1,5 +1,6 @@
 #ifndef PLOTTER_H
 #define PLOTTER_H
+#include <stdint.h>
 
 enum class Target {
   LEFT,
@@ -16,7 +17,7 @@ class Plotter {
         float *get_target_pos();
         void set_target_pos(float pos[2]);
         float *calc_pos_error(float current[2], float target[2]);
-        void MoveMotorTime(int voltage, Target target, int time);
+        void MoveMotorTime(int voltage, Target target, uint16_t time);
         void MoveMotors(int voltage, Target target);
         void StopMotors();
         void ResetEncoders();
@@ -32,7 +33,8 @@ class Plotter {
         void set_right_boundary(float boundary);
         void set_top_boundary(float boundary);
         void set_bottom_boundary(float boundary);
-        static volatile uint32_t motor_timer;
+        static volatile uint16_t motor_timer;
+        void MoveTo(int x_pos, int y_pos);
 
     private:
         float current_pos[2];

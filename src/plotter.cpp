@@ -13,10 +13,10 @@
 Limit_Switch limit_switch;
 Motor motor_A(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN), motor_B(0, MotorID::M2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);
 
-int nominal_speed = 255; // Default speed for motors
-int approach_speed = 80; // Speed for approaching limit switches
-int retreat_time = 100; // Time to retreat after hitting a limit switch
-volatile uint32_t Plotter::motor_timer = 0;
+int nominal_speed = 200; // Default speed for motors
+int approach_speed = 150; // Speed for approaching limit switches
+int retreat_time = 180; // Time to retreat after hitting a limit switch
+volatile uint16_t Plotter::motor_timer = 0;
 
 Plotter::Plotter() {
     current_pos[0] = 0.0;
@@ -64,7 +64,7 @@ float *Plotter::calc_pos_error(float current_pos[2], float target_pos[2]) {
     return delta_pos;
 }
 
-void Plotter::MoveMotorTime(int voltage, Target target, int time){
+void Plotter::MoveMotorTime(int voltage, Target target, uint16_t time){
     cli();
     TCCR2B |= (1 << CS21) | (1 << CS20); // Prescaler = 64 = 1ms overflow
     TCNT2 = 0;
@@ -131,21 +131,29 @@ void Plotter::MoveMotors(int voltage, Target target){
 }
 
 void Plotter::test() {
-    ResetEncoders();
+    Serial.print("testing");
 
-    motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CCW);
-    motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+    MoveMotors(nominal_speed, Target::LEFT);
 
-    while(1){
-        Serial.print("X pos = ");
-        Serial.print(get_current_pos()[0]);
-        Serial.print(" Y pos = ");
-        Serial.println(get_current_pos()[1]);
-        // Serial.print("Dist ");
-        // Serial.println(motor_A.GetEncoderDist());
-        // motor_A.GetEncoderDist();
-    }
+    delay(3000);
 
+    StopMotors();
+
+    // MoveMotors(nominal_speed, Target::LEFT);
+    // delay(1000);
+    // MoveMotors(nominal_speed, Target::RIGHT);
+    // delay(1000);
+    // MoveMotors(nominal_speed, Target::UP);
+    // delay(1000);
+    // MoveMotors(nominal_speed, Target::DOWN);
+
+    // MoveMotorTime(nominal_speed, Target::LEFT, 1000);
+    // delay(1000);
+    // MoveMotorTime(nominal_speed, Target::RIGHT, 1000);
+    // delay(1000);
+    // MoveMotorTime(nominal_speed, Target::UP, 1000);
+    // delay(1000);
+    // MoveMotorTime(nominal_speed, Target::DOWN, 1000);
     
 }
 
@@ -154,23 +162,31 @@ void Plotter::home() {
 
     // ------------ HOME LEFT ------------ //
     while(!(Limit_Switch::switch_state & (1 << 0))){
+        Serial.println("moving 1");
         MoveMotors(nominal_speed, Target::LEFT);
     }
-
+    Serial.print("stopping 1");
     StopMotors();
+    delay(1000);
 
     //Retreat right
     MoveMotorTime(approach_speed, Target::RIGHT, 2000);
     Limit_Switch::switch_state = 0;
+        delay(1000);
+
 
     //Approach left
     while(!(Limit_Switch::switch_state & (1 << 0))){
         MoveMotors(approach_speed, Target::LEFT);
     }
     
+
     StopMotors();
     ResetEncoders();
     set_left_boundary(0.0);
+
+    delay(1000);
+
 
     //Retreat right
     MoveMotorTime(approach_speed, Target::RIGHT, 2000);
@@ -281,22 +297,55 @@ void Plotter::set_bottom_boundary(float boundary) {
     bottom_boundary = boundary;
 }
 
-ISR(INT0_vect){ 
+void Plotter::MoveTo(int x_pos, int y_pos){
+
+    float current_x = get_current_pos()[0];
+    float current_y = get_current_pos()[1];
+    float x_error = x_pos - current_x;
+    float y_error = y_pos - current_y;
+    float total_error = (abs(x_error) + abs(y_error)) / 2;
+    int k_p = 1;
+    int x_control_effort = x_error * k_p;
+    int y_control_effort = y_error * k_p;
+    int M1_control_effort = (x_control_effort + y_control_effort) / 2;
+    int M2_control_effort = (x_control_effort - y_control_effort) / 2;
+
+
+    while (total_error > 1){
+        current_x = get_current_pos()[0];
+        current_y = get_current_pos()[1];
+        x_error = x_pos - current_x;
+        y_error = y_pos - current_y;
+        total_error = (abs(x_error) + abs(y_error)) / 2;
+        x_control_effort = x_error * k_p;
+        y_control_effort = y_error * k_p;
+        M1_control_effort = 50 + (x_control_effort + y_control_effort) / 2;
+        M2_control_effort = 50 + (x_control_effort - y_control_effort) / 2;
+        
+        motor_A.move_motor(MotorID::M1, M1_control_effort, (M1_control_effort < 0) ? Direction::CCW : Direction::CW);
+        motor_B.move_motor(MotorID::M1, M2_control_effort, (M2_control_effort < 0) ? Direction::CCW : Direction::CW);
+
+    }
+    StopMotors();
+
+}
+
+ISR(INT2_vect){ 
     // motor_A.DisableMotor(); 
     Limit_Switch::switch_state |= (1 << 0);
 }
-ISR(INT1_vect){ 
+ISR(INT3_vect){ 
     // motor_A.DisableMotor(); 
         Limit_Switch::switch_state |= (1 << 1);
 
 }
 // ISR(INT2_vect){ 
-//     // motor_A.DisableMotor(); 
+    // motor_A.DisableMotor(); 
 //     Limit_Switch::switch_state |= (1 << 2);
 
 // }
 // ISR(INT3_vect){ 
-//     // motor_A.DisableMotor();
+    // motor_A.DisableMotor();
 //     Limit_Switch::switch_state |= (1 << 3);
 
 // }
