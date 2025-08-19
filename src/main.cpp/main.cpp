@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "motor.hpp"
+#include "plotter.h"
 
 #define MOT1_PWM_PIN PB1
 #define MOT2_PWM_PIN PB2
@@ -34,32 +35,32 @@ int main() {
     Plotter plotter;
     Motor motor1(0, 1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN);  // voltage=0, timer=1, pwm_pin=PB1, enc_a=PD2, enc_b=PD3
     Motor motor2(0, 2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);  // another motor on Timer2 with different encoder pins
-    char key_in;
-    int x;
-    int y;
+    // char key_in;
+    // int x;
+    // int y;
     
-    while(1) {
-        key_in = getchar();
-        g_code_extractor(key_in);
-        switch(state) {
-            case IDLE:
-                if(key_in == *(G1)) new_state(HOMING);
-                if(key_in == *(G28)) new_state(MOVING);
-                doIdle(plotter);
-                break;
-            case HOMING:
-                doHoming(plotter);
-                break;
-            case MOVING:
-                doMoving(plotter);  // <--- motor control loop here
-                break;
-            case FAULT:
-                doFault(plotter);
-                break;
-        }
-        // delay ???
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    // while(1) {
+    //     key_in = getchar();
+    //     g_code_extractor(key_in);
+    //     switch(state) {
+    //         case IDLE:
+    //             if(key_in == *(G1)) new_state(HOMING);
+    //             if(key_in == *(G28)) new_state(MOVING);
+    //             doIdle(plotter);
+    //             break;
+    //         case HOMING:
+    //             doHoming(plotter);
+    //             break;
+    //         case MOVING:
+    //             doMoving(plotter);  // <--- motor control loop here
+    //             break;
+    //         case FAULT:
+    //             doFault(plotter);
+    //             break;
+    //     }
+    //     // delay ???
+    //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // }
     return 0;
 }
 
