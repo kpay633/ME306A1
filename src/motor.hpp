@@ -1,27 +1,21 @@
 #ifndef MOTOR_HPP
 #define MOTOR_HPP
 
-#include <Arduino.h>
-
-enum class MotorID {
-  M1,  // PE3 → OC3A → D5. _TIMER3A
-  M2   // PH3 → OC4A → D6 _TIMER4A
-};
-
-enum class Direction {
-  CW,
-  CCW
+enum class Timer {
+  TIMER3A,  // PE3 → OC3A → D5
+  TIMER4A   // PH3 → OC4A → D6
 };
 
 class Motor {
   private:
     int voltage = 0;
 
-    MotorID motorID;
+    Timer timer;
     int pwm_pin;
     int enc_a_pin;
     int enc_b_pin;
 
+<<<<<<< HEAD
     int pinA;
     int pinB;
 
@@ -46,7 +40,13 @@ class Motor {
 
     static Motor* motor1;
     static Motor* motor2;
+=======
+  public:
+    Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin);
+>>>>>>> 2fb469a3443a680139b88f9acccccf10f1443cca
 
+    int get_voltage() const;
+    void move_motor(int voltage);
 };
 
 #endif // MOTOR_HPP

@@ -1,27 +1,30 @@
 #include "motor.hpp"
 #include <avr/io.h>
 
-Motor* Motor::motor1 = nullptr;
-Motor* Motor::motor2 = nullptr;
+Motor::Motor(int voltage, Timer timer, int pwm_pin, int enc_a_pin, int enc_b_pin)
+  : voltage(voltage), timer(timer), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
 
-Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin)
-  : voltage(voltage), motorID(motorID), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
+  DDRD &= ~(1 << enc_a_pin);
+  DDRD &= ~(1 << enc_b_pin);
 
+<<<<<<< HEAD
   DDRD &= ~(1 << enc_a_pin);
   DDRD &= ~(1 << enc_b_pin);
 
   switch (motorID) {
     case MotorID::M1:
+=======
+  switch (timer) {
+    case Timer::TIMER3A:
+>>>>>>> 2fb469a3443a680139b88f9acccccf10f1443cca
       // PE3 → OC3A → D5
       DDRE |= (1 << PE3);  // Set PE3 as output
-
-      DDRG |= (1 << PG5); //DIRECTION CONTROL ENABLED
-
 
       // Fast PWM, 8-bit: WGM3 = 0b0101
       TCCR3A = (1 << COM3A1) | (1 << WGM30);
       TCCR3B = (1 << WGM32) | (1 << CS31); // Prescaler = 8
       OCR3A = voltage;
+<<<<<<< HEAD
 
       DDRE &= ~(1 << enc_a_pin); //Set pins 20 and 21 as inputs for encoder signals
       DDRE &= ~(1 << enc_b_pin);
@@ -37,15 +40,18 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
       break;
 
     case MotorID::M2:
+=======
+      break;
+
+    case Timer::TIMER4A:
+>>>>>>> 2fb469a3443a680139b88f9acccccf10f1443cca
       // PH3 → OC4A → D6
       DDRH |= (1 << PH3);  // Set PH3 as output
-
-      DDRH |= (1 << PH4); //DIR3ECTION CONTROL ENABLED
-
 
       TCCR4A = (1 << COM4A1) | (1 << WGM40);
       TCCR4B = (1 << WGM42) | (1 << CS41); // Prescaler = 8
       OCR4A = voltage;
+<<<<<<< HEAD
 
       DDRE &= ~(1 << enc_a_pin); //Set pins 18 and 19 as inputs for encoder signals
       DDRE &= ~(1 << enc_b_pin);
@@ -58,10 +64,13 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
       pinB = enc_b_pin;
 
       motor2 = this;
+=======
+>>>>>>> 2fb469a3443a680139b88f9acccccf10f1443cca
       break;
   }
 }
 
+<<<<<<< HEAD
 // int Motor::get_voltage() const {
 //   return voltage;
 // }
@@ -81,9 +90,19 @@ void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
   if (!disabled){
     if (new_voltage < 0) new_voltage = 0;
     if (new_voltage > 255) new_voltage = 255;
+=======
+int Motor::get_voltage() const {
+  return voltage;
+}
+
+void Motor::move_motor(int new_voltage) {
+  if (new_voltage < 0) new_voltage = 0;
+  if (new_voltage > 255) new_voltage = 255;
+>>>>>>> 2fb469a3443a680139b88f9acccccf10f1443cca
 
     voltage = new_voltage;
 
+<<<<<<< HEAD
     switch (motorID) {
       case MotorID::M1:
         if (direction == Direction::CCW) {PORTG |= (1 << PG5);
@@ -157,4 +176,14 @@ ISR(INT5_vect) {
   if(Motor::motor2 != nullptr) {
     Motor::motor2->incrementEncoder();
   }
+=======
+  switch (timer) {
+    case Timer::TIMER3A:
+      OCR3A = voltage;
+      break;
+    case Timer::TIMER4A:
+      OCR4A = voltage;
+      break;
+  }
+>>>>>>> 2fb469a3443a680139b88f9acccccf10f1443cca
 }

@@ -23,8 +23,12 @@ class Plotter {
         void ResetEncoders();
         static void IncrementMotorTimer();
         void home();
+<<<<<<< HEAD
         void test();
         void move_to_target(float x, float y, float speed);
+=======
+        void move_to_target(float x, float y, int speed);
+>>>>>>> 2fb469a3443a680139b88f9acccccf10f1443cca
         float get_left_boundary();
         float get_right_boundary();
         float get_top_boundary();
