@@ -1,3 +1,5 @@
+// LATEST WORKING VERSION
+
 #ifndef PLOTTER_H
 #define PLOTTER_H
 
@@ -10,7 +12,7 @@ class Plotter {
         void set_target_pos(float pos[2]);
         float *calc_pos_error(float current[2], float target[2]);
         void home();
-        void move_to_target(float x, float y, int speed);
+        void move_to_target(float x, float y, float speed);
         float get_left_boundary();
         float get_right_boundary();
         float get_top_boundary();

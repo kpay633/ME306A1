@@ -1,3 +1,5 @@
+// LATEST WORKING VERSION
+
 #include "plotter.h"
 #include "limit_switch.hpp"
 #include "motor.hpp"
@@ -10,9 +12,8 @@
 #define MOT2_ENCA_PIN PD2
 #define MOT2_ENCB_PIN PD3
 
-Limit_Switch limit_switch;
-Motor motor_A(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN);
-Motor motor_B(0, MotorID::M2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);
+Limit_Switch limit_switch_left(&DDRB, &PINB, &PORTB, PB7), limit_switch_right(&DDRB, &PINB, &PORTB, PB6), limit_switch_top(&DDRB, &PINB, &PORTB, PB4), limit_switch_bottom(&DDRB, &PINB, &PORTB, PB5);
+Motor motor_A(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN), motor_B(0, MotorID::M2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);
 
 int nominal_speed = 200; // Default speed for motors
 int approach_speed = 80; // Speed for approaching limit switches
@@ -56,12 +57,10 @@ float *Plotter::calc_pos_error(float current_pos[2], float target_pos[2]) {
 }
 
 void Plotter::home() {
-    // motor_A.ResetEncoder();
-    // motor_B.ResetEncoder();
+    motor_A.ResetEncoder();
+    motor_B.ResetEncoder();
 
-    Serial.println("homing");
-
-    while (!limit_switch.is_pressed(switchPos::Left)) {
+    while (!limit_switch_left.is_pressed()) {
         motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CW);
         motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CW);
     }
@@ -88,7 +87,7 @@ void Plotter::home() {
     //     motor_B.anticlockwise(nominal_speed, retreat_time);
     // }
 
-    while (!limit_switch.is_pressed(switchPos::Right)) {
+    while (!limit_switch_right.is_pressed()) {
         motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CCW);
         motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CCW);
     }
@@ -114,7 +113,7 @@ void Plotter::home() {
     //     motor_B.clockwise(nominal_speed, retreat_time);
     // }
 
-    while (!limit_switch.is_pressed(switchPos::Bottom)) {
+    while (!limit_switch_bottom.is_pressed()) {
         motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CW);
         motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CCW);
     }
@@ -143,7 +142,7 @@ void Plotter::home() {
     //     motor_B.clockwise(nominal_speed, retreat_time);
     // }
 
-    while (!limit_switch.is_pressed(switchPos::Top)) {
+    while (!limit_switch_top.is_pressed()) {
         motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CCW);
         motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CW);
     }
@@ -218,63 +217,3 @@ void Plotter::set_top_boundary(float boundary) {
 void Plotter::set_bottom_boundary(float boundary) {
     bottom_boundary = boundary;
 }
-
-// void Plotter::move_to_target(float x, float y, int speed) {
-//     // Implement the logic to move the plotter to the target position (x, y) at the specified speed
-//     // This will involve calculating the necessary motor movements and updating current_pos accordingly
-//     // For now, we will just set the target position
-//     current_pos[0] = 0.0;
-//     current_pos[1] = 0.0;
-
-//     target_pos[0] = x;
-//     target_pos[1] = y;
-
-//     motor_A.ResetEncoder();
-//     motor_B.ResetEncoder();
-
-//     while (true){
-//         calc_pos_error(current_pos, target_pos);
-
-//         // Check if the error is within a small threshold
-//         if (std::abs(delta_pos[0]) < 0.01 && std::abs(delta_pos[1]) < 0.01) {
-//             break; // Target reached
-//         }
-
-//         while (abs(delta_pos[0]) > 0.01) {
-//             if (delta_pos[0] > 0) {
-//             motor_A.move_motor(MotorID::M1, speed, Direction::CCW);
-//             motor_B.move_motor(MotorID::M2, speed, Direction::CCW);
-//             } else {
-//             motor_A.move_motor(MotorID::M1, speed, Direction::CW);
-//             motor_B.move_motor(MotorID::M2, speed, Direction::CW);
-//             }
-//             current_pos[0] += (motor_A.GetEncoderDist() + motor_B.GetEncoderDist()) / 2; // Update current position based on motor movement
-//             calc_pos_error(current_pos, target_pos);
-//             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-//         }
-
-//         motor_A.stop_motor(MotorID::M1);
-//         motor_B.stop_motor(MotorID::M2);
-
-//         while (abs(delta_pos[1]) > 0.01) {
-//             if (delta_pos[1] > 0) {
-//                 motor_A.move_motor(MotorID::M1, speed, Direction::CCW);
-//                 motor_B.move_motor(MotorID::M2, speed, Direction::CW);
-//             } else {
-//                 motor_A.move_motor(MotorID::M1, speed, Direction::CW);
-//                 motor_B.move_motor(MotorID::M2, speed, Direction::CCW);
-//             }
-//             current_pos[1] += (motor_A.GetEncoderDist() - motor_B.GetEncoderDist()) / 2; // Update current position based on motor movement
-//             calc_pos_error(current_pos, target_pos);
-//             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-//         }
-
-//         motor_A.stop_motor(MotorID::M1);
-//         motor_B.stop_motor(MotorID::M2);
-//     }
-
-//     // After reaching the target position, update the current position
-//     current_pos[0] = target_pos[0];
-//     current_pos[1] = target_pos[1];
-//     std::cout << "Moved to target position: (" << current_pos[0] << ", " << current_pos[1] << ")\n";
-// }

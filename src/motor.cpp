@@ -1,14 +1,25 @@
+// LATEST WORKING VERSION
+
 #include "motor.hpp"
 #include <avr/io.h>
 
 Motor* Motor::motor1 = nullptr;
 Motor* Motor::motor2 = nullptr;
 
+#define MOT1_ENCA_PIN PF0
+#define MOT1_ENCB_PIN PF1
+#define MOT2_ENCA_PIN PK0
+#define MOT2_ENCB_PIN PK1
+
+#define MOT1_REG PINF
+#define MOT2_REG PINK
+
+
 Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin)
   : voltage(voltage), motorID(motorID), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
 
-  DDRD &= ~(1 << enc_a_pin);
-  DDRD &= ~(1 << enc_b_pin);
+  DDRD &= ~(1 << PD0);
+  DDRD &= ~(1 << PD1);
 
   switch (motorID) {
     case MotorID::M1:
@@ -23,15 +34,15 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
       TCCR3B = (1 << WGM32) | (1 << CS31); // Prescaler = 8
       OCR3A = voltage;
 
-      DDRE &= ~(1 << enc_a_pin); //Set pins 20 and 21 as inputs for encoder signals
-      DDRE &= ~(1 << enc_b_pin);
+      DDRD &= ~(1 << PD1); //Set pins 20 and 21 as inputs for encoder signals
+      DDRD &= ~(1 << PD0);
 
-      EICRB |= (1 << ISC40); //Enable INT0 on rising edge
-      EICRB &= ~(1 << ISC41);
-      EIMSK |= (1 << INT4);
+      EICRA |= (1 << ISC00); //Enable INT0 on rising edge
+      EICRA &= ~(1 << ISC01);
+      EIMSK |= (1 << INT0);
 
-      pinA = enc_a_pin;
-      pinB = enc_b_pin;
+      pinA = PD0;
+      pinB = PD1;
 
       motor1 = this;
       break;
@@ -47,12 +58,12 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
       TCCR4B = (1 << WGM42) | (1 << CS41); // Prescaler = 8
       OCR4A = voltage;
 
-      DDRE &= ~(1 << enc_a_pin); //Set pins 18 and 19 as inputs for encoder signals
-      DDRE &= ~(1 << enc_b_pin);
+      DDRD &= ~(1 << PD3); //Set pins 18 and 19 as inputs for encoder signals
+      DDRD &= ~(1 << PD2);
 
-      EICRB |= (1 << ISC50); //Enable INT2 on rising edge
-      EICRB &= ~(1 << ISC51);
-      EIMSK |= (1 << INT5);
+      EICRA |= (1 << ISC20); //Enable INT2 on rising edge
+      EICRA &= ~(1 << ISC21);
+      EIMSK |= (1 << INT2);
 
       pinA = enc_a_pin;
       pinB = enc_b_pin;
@@ -62,13 +73,18 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
   }
 }
 
-// int Motor::get_voltage() const {
-//   return voltage;
-// }
+void pcint_init(void) {
+  // ------ MOTOR 1 ENCODER --------
+  DDRF &= ~((1 << MOT1_ENCA_PIN) | (1 << MOT1_ENCB_PIN)); 
+  DDRK &= ~((1 << MOT2_ENCA_PIN) | (1 << MOT2_ENCB_PIN));
 
+  // Enable interupt on PB4 (PCINT4) (D10)
+  PCMSK1 |= (1 << PCINT8);
+  PCMSK2 |= (1 << PCINT16);
 
-
-
+  //Enable PCINT2 group
+  PCICR |= (1 << PCIE1) | (1 << PCIE2);
+}
 
 void Motor::stop_motor(MotorID motorID) {
   switch (motorID) {
@@ -81,71 +97,45 @@ void Motor::stop_motor(MotorID motorID) {
   }
 }
 
-
-
-
 void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
-  if (!disabled){
-    if (new_voltage < 0) new_voltage = 0;
-    if (new_voltage > 255) new_voltage = 255;
+  if (new_voltage < 0) new_voltage = 0;
+  if (new_voltage > 255) new_voltage = 255;
 
-    voltage = new_voltage;
+  voltage = new_voltage;
 
-    switch (motorID) {
-      case MotorID::M1:
-        if (direction == Direction::CCW) {PORTG |= (1 << PG5);
-        } 
-        else if (direction == Direction::CW) {PORTG &= ~(1 << PG5);
-        }
+  switch (motorID) {
+    case MotorID::M1:
+      if (direction == Direction::CCW) {PORTG |= (1 << PG5);
+      } 
+      else if (direction == Direction::CW) {PORTG &= ~(1 << PG5);
+      }
 
-        OCR3A = voltage;
-        break;
+      OCR3A = voltage;
+      break;
 
-      case MotorID::M2:
-        if (direction == Direction::CCW) {PORTH |= (1 << PH4);
-        } 
-        else if (direction == Direction::CW) {PORTH &= ~(1 << PH4);
-        }
+    case MotorID::M2:
+      if (direction == Direction::CCW) {PORTH |= (1 << PH4);
+      } 
+      else if (direction == Direction::CW) {PORTH &= ~(1 << PH4);
+      }
 
-        OCR4A = voltage;
-        break;
-    }
+      OCR4A = voltage;
+      break;
   }
 }
 
-void Motor::DisableMotor(){
-  disabled = true;
-  stop_motor(MotorID::M1);
-  stop_motor(MotorID::M2);
-}
-
-void Motor::EnableMotor(){
-  disabled = false;
-}
-
-
-// void clockwise(int voltage, int ms);
-// void anticlockwise(int voltage, int ms);
-
 int Motor::GetEncoderDist() {
-  // Serial.print("encoder value ");
-  // Serial.println(encCount);
-  return encCount; 
+  return int(double(encCount) * 13.5 * 3.14 / 172 / 24); // Convert counts to distance
 }
 
 void Motor::ResetEncoder() {
-  Serial.println("Resetting encoder");
   encCount = 0; // Reset the encoder count to zero
 }
 
-void Motor::ResetEncoder(int set_value){
-  encCount = set_value;
-}
-
-void Motor::incrementEncoder() {
-  uint8_t pin_state = PINE;
-  uint8_t a = (pin_state & (1 << PE4)) ? 1 : 0;
-  uint8_t b = (pin_state & (1 << PE0)) ? 1 : 0;
+void Motor::incrementEncoder1() {
+  uint8_t pin_state = MOT1_REG;
+  uint8_t a = (pin_state >> MOT1_ENCA_PIN) & 0x01;
+  uint8_t b = (pin_state >> MOT1_ENCB_PIN) & 0x01;
 
   if (a == b) {
     encCount++;
@@ -154,14 +144,26 @@ void Motor::incrementEncoder() {
   }
 }
 
-ISR(INT4_vect) {
-  if(Motor::motor1 != nullptr) {
-    Motor::motor1->incrementEncoder();
+void Motor::incrementEncoder2() {
+  uint8_t pin_state = MOT2_REG;
+  uint8_t a = (pin_state >> MOT2_ENCA_PIN) & 0x01;
+  uint8_t b = (pin_state >> MOT2_ENCB_PIN) & 0x01;
+
+  if (a == b) {
+    encCount++;
+  } else {
+    encCount--; 
   }
 }
 
-ISR(INT5_vect) {
+ISR(PCINT0_vect) {
+  if(Motor::motor1 != nullptr) {
+    Motor::motor1->incrementEncoder1();
+  }
+}
+
+ISR(PCINT2_vect) {
   if(Motor::motor2 != nullptr) {
-    Motor::motor2->incrementEncoder();
+    Motor::motor2->incrementEncoder2();
   }
 }

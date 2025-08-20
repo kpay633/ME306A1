@@ -1,3 +1,5 @@
+// LATEST WORKING VERSION
+
 #ifndef MOTOR_HPP
 #define MOTOR_HPP
 
@@ -25,9 +27,7 @@ class Motor {
     int pinA;
     int pinB;
 
-    bool disabled;
-
-    volatile int16_t encCount = 0;
+    volatile uint16_t encCount;
 
   public:
     Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin);
@@ -36,13 +36,11 @@ class Motor {
     
     void stop_motor(MotorID motorID);
     void move_motor(MotorID motorID, int voltage, Direction direction);
-    void DisableMotor();
-    void EnableMotor();
 
     int GetEncoderDist();
     void ResetEncoder();
-    void ResetEncoder(int set_value);
-    void incrementEncoder();
+    void incrementEncoder1();
+    void incrementEncoder2();
 
     static Motor* motor1;
     static Motor* motor2;
