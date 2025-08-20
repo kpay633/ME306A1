@@ -13,13 +13,13 @@
 #define MOT2_ENCB_PIN PD3
 
 Limit_Switch limit_switch_left(&DDRB, &PINB, &PORTB, PB7), limit_switch_right(&DDRB, &PINB, &PORTB, PB6), limit_switch_top(&DDRB, &PINB, &PORTB, PB4), limit_switch_bottom(&DDRB, &PINB, &PORTB, PB5);
-Motor motor_A(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN), motor_B(0, MotorID::M2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);
+// Motor motor_A(MotorID::M1), motor_B(MotorID::M2);
 
 int nominal_speed = 200; // Default speed for motors
 int approach_speed = 80; // Speed for approaching limit switches
 int retreat_time = 100; // Time to retreat after hitting a limit switch
 
-Plotter::Plotter() {
+Plotter::Plotter(Motor* Motor_A, Motor* Motor_B) : motor_A(Motor_A), motor_B(Motor_B) {
     current_pos[0] = 0.0;
     current_pos[1] = 0.0;
     target_pos[0] = 0.0;
@@ -32,7 +32,24 @@ Plotter::Plotter() {
     bottom_boundary = 0.0;
 }
 
+void Plotter::test(){
+    motor_A->move_motor(MotorID::M1, 200, Direction::CW);
+    motor_B->move_motor(MotorID::M2, 200, Direction::CW);
+
+        while(1) {
+      Serial.print("X ");
+      Serial.print(get_current_pos()[0]);
+      Serial.print(" Y ");
+      Serial.println(get_current_pos()[1]);
+  }
+
+}
+
 float *Plotter::get_current_pos() {
+    float a = motor_A->GetEncoderDist() * 13.5 * 3.14 / 24.0 / 172.0;
+    float b = motor_B->GetEncoderDist() * 13.5 * 3.14 / 24.0 / 172.0;
+    current_pos[0] = (a + b) / 2.0;
+    current_pos[1] = (a - b) / 2.0;
     return current_pos;
 }
 
@@ -57,16 +74,16 @@ float *Plotter::calc_pos_error(float current_pos[2], float target_pos[2]) {
 }
 
 void Plotter::home() {
-    motor_A.ResetEncoder();
-    motor_B.ResetEncoder();
+    motor_A->ResetEncoder();
+    motor_B->ResetEncoder();
 
     while (!limit_switch_left.is_pressed()) {
-        motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CW);
-        motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CW);
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW);
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
     }
 
-    motor_A.stop_motor(MotorID::M1);
-    motor_B.stop_motor(MotorID::M2);
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
 
     // if (limit_switch_left.is_pressed()) {
     //     motor_A.stop_motor(MotorID::M1);
@@ -88,12 +105,12 @@ void Plotter::home() {
     // }
 
     while (!limit_switch_right.is_pressed()) {
-        motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CCW);
-        motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW);
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
     }
 
-    motor_A.stop_motor(MotorID::M1);
-    motor_B.stop_motor(MotorID::M2);
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
 
     // if (limit_switch_right.is_pressed()) {
     //     motor_A.stop_motor(MotorID::M1);
@@ -114,12 +131,12 @@ void Plotter::home() {
     // }
 
     while (!limit_switch_bottom.is_pressed()) {
-        motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CW);
-        motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW);
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
     }
 
-    motor_A.stop_motor(MotorID::M1);
-    motor_B.stop_motor(MotorID::M2);
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
 
     // if (limit_switch_bottom.is_pressed()) {
     //     motor_A.stop_motor(MotorID::M1);
@@ -143,12 +160,12 @@ void Plotter::home() {
     // }
 
     while (!limit_switch_top.is_pressed()) {
-        motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CCW);
-        motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CW);
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW);
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
     }
 
-    motor_A.stop_motor(MotorID::M1);
-    motor_B.stop_motor(MotorID::M2);
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
 
     // if (limit_switch_top.is_pressed()) {
     //     motor_A.stop_motor(MotorID::M1);
