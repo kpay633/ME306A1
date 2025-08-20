@@ -9,7 +9,7 @@
 #include "gcodeParser.hpp"
 
 volatile unsigned long sys_ticks = 0;  // should increment every 1ms
-State global_state;
+
 
 enum class State {
     IDLE,
@@ -18,11 +18,13 @@ enum class State {
     FAULT
 };
 
+State global_state;
+
 void new_state(State);
-void doIdle(Plotter&);
-void doHoming(Plotter&);
-void doMoving(Plotter&);
-void doFault(Plotter&);
+// void doIdle(Plotter&);
+// void doHoming(Plotter&);
+// void doMoving(Plotter&);
+// void doFault(Plotter&);
 GCodeCommand parse_input();
 
 
@@ -33,6 +35,7 @@ int main() {
   sei();
 
   global_state = State::IDLE;
+  GCodeParser parser;
   GCodeCommand cmd;
   // Plotter plotter; 
 
@@ -44,26 +47,35 @@ int main() {
 
 
   while (1) {
-    cmd = parse_input();  // will return NONE if no new input
+    cmd = parser.check_user_input();  // will return NONE if no new input
 
     switch(global_state) {
       case State::IDLE:
-        if(cmd.type == CommandType::G1) new_state(State::MOVING);
-        else if(cmd.type == CommandType::G28) new_state(State::HOMING);
-        else if(cmd.type == CommandType::M999) doFault(plotter);
-        doIdle(plotter);
+        if(cmd.type == CommandType::G1) {
+          new_state(State::MOVING); 
+          Serial.println("Switching state to MOVING.");
+        }
+        else if(cmd.type == CommandType::G28) {
+          new_state(State::HOMING);
+        }
+        else if(cmd.type == CommandType::M999) {
+          // doFault(plotter);
+          Serial.println("Switching state to FAULT.");
+
+        }
+        // doIdle(plotter);
         break;
 
       case State::HOMING:
-        doHoming(plotter);
+        // doHoming(plotter);
         break;
 
       case State::MOVING:
-        doMoving(plotter);
+        // doMoving(plotter);
         break;
 
       case State::FAULT:
-        doFault(plotter);
+        // doFault(plotter);
         break;
     }
   }
@@ -75,52 +87,22 @@ int main() {
 
 void new_state(State s) {
     global_state = s;
-    std::cout << "Transitioning to state: " << s << "\n";
+    Serial.println("Switching state to s");
 }
-void doIdle(Plotter& plotter) {
-    std::cout << "Idle ..." << "\n";
-}
-void doHoming(Plotter& plotter) {
-    plotter.home();
-    new_state(IDLE);
-}
-void doMoving(Plotter& plotter) {
-  plotter.position(x, y);
-}
-void doFault(Plotter& plotter) {
-  //print an error message and stop everything. 
-}
+// void doIdle(Plotter& plotter) {
 
+// }
+// void doHoming(Plotter& plotter) {
+//     plotter.home();
+//     new_state(IDLE);
+// }
+// void doMoving(Plotter& plotter) {
+//   plotter.position(x, y);
+// }
+// void doFault(Plotter& plotter) {
+//   //print an error message and stop everything. 
+// }
 
-
-
-GCodeCommand parse_input() {
-  Serial.println("Hello from Arduino main! Serial is working.");
-  GCodeParser parser;
-  GCodeCommand command; 
-  char user_input[64];     // buffer for one command line
-  size_t idx = 0;
-  
-  while (Serial.available() > 0) {
-    char c = Serial.read();
-
-    if (c == '\n' || c == '\r') {   // end of command
-      if (idx > 0) {              // only parse if buffer not empty
-        user_input[idx] = '\0'; // terminate C string
-        command = parser.parseLine(user_input);
-
-        Serial.print("Results: "); Serial.print((int)command.type); Serial.print(", "); Serial.print(command.x); Serial.print(", "); Serial.println(command.y);
-        idx = 0;                // reset for next command
-      } else {
-        // ignore stray CR/LF when buffer is empty
-      }
-    } else {
-      if (idx < sizeof(user_input) - 1) {
-        user_input[idx++] = c;  // add char to buffer
-      }
-    } 
-  }
-}
 
 
 

@@ -29,6 +29,7 @@ class GCodeParser {
     bool hasCommand(); // This is true if message has been received... hence can activate state transition
     int getCommand(); // If hasCommand, will get command in main and then act on that. 
     GCodeCommand parseLine(const char* user_input);
+    GCodeCommand check_user_input()
 };
 
 

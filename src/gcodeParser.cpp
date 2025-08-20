@@ -123,3 +123,35 @@ GCodeCommand GCodeParser::parseLine(const char* user_input) {
   this->previous_command = cmd;
   return cmd;
 }
+
+
+
+
+GCodeCommand parse_input() {
+  Serial.println("Hello from Arduino main! Serial is working.");
+  GCodeCommand command = CommandType::NONE; //HOW DO I INITIALISE THIS ALL AS NULL. 
+  char user_input[64];     // buffer for one command line
+  size_t idx = 0;
+  
+  while (Serial.available() > 0) {
+    char c = Serial.read();
+
+    if (c == '\n' || c == '\r') {   // end of command
+      if (idx > 0) {              // only parse if buffer not empty
+        user_input[idx] = '\0'; // terminate C string
+        command = parser.parseLine(user_input);
+
+        Serial.print("Results: "); Serial.print((int)command.type); Serial.print(", "); Serial.print(command.x); Serial.print(", "); Serial.println(command.y);
+        idx = 0;                // reset for next command
+      } else {
+        // ignore stray CR/LF when buffer is empty
+      }
+    } else {
+      if (idx < sizeof(user_input) - 1) {
+        user_input[idx++] = c;  // add char to buffer
+      }
+    } 
+  }
+  return command;
+}
+
