@@ -6,11 +6,21 @@
 Motor* Motor::motor1 = nullptr;
 Motor* Motor::motor2 = nullptr;
 
-Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin)
-  : voltage(voltage), motorID(motorID), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
+#define MOT1_ENCA_PIN PJ0
+#define MOT1_ENCB_PIN PJ1
+#define MOT2_ENCA_PIN PK0
+#define MOT2_ENCB_PIN PK1
+
+#define MOT1_REG PINJ
+#define MOT2_REG PINK
+
+
+Motor::Motor(MotorID motorID)
+  : motorID(motorID) {
 
   DDRD &= ~(1 << PD0);
   DDRD &= ~(1 << PD1);
+  pcint_init();
 
   switch (motorID) {
     case MotorID::M1:
@@ -64,13 +74,18 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
   }
 }
 
-// int Motor::get_voltage() const {
-//   return voltage;
-// }
+void Motor::pcint_init(void) {
+  // ------ MOTOR 1 ENCODER --------
+  DDRJ &= ~((1 << MOT1_ENCA_PIN) | (1 << MOT1_ENCB_PIN)); 
+  DDRK &= ~((1 << MOT2_ENCA_PIN) | (1 << MOT2_ENCB_PIN));
 
+  // Enable interupt on PB4 (PCINT4) (D10)
+  PCMSK1 |= (1 << PCINT9);
+  PCMSK2 |= (1 << PCINT16);
 
-
-
+  //Enable PCINT2 group
+  PCICR |= (1 << PCIE1) | (1 << PCIE2);
+}
 
 void Motor::stop_motor(MotorID motorID) {
   switch (motorID) {
@@ -82,9 +97,6 @@ void Motor::stop_motor(MotorID motorID) {
       break;
   }
 }
-
-
-
 
 void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
   if (new_voltage < 0) new_voltage = 0;
@@ -113,22 +125,18 @@ void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
   }
 }
 
-
-// void clockwise(int voltage, int ms);
-// void anticlockwise(int voltage, int ms);
-
 int Motor::GetEncoderDist() {
-  return int(double(encCount) * 13.5 * 3.14 / 172 / 24); // Convert counts to distance
+  return encCount; // Convert counts to distance
 }
 
 void Motor::ResetEncoder() {
   encCount = 0; // Reset the encoder count to zero
 }
 
-void Motor::incrementEncoder() {
-  uint8_t pin_state = PIND;
-  uint8_t a = (pin_state >> pinA) & 0x01;
-  uint8_t b = (pin_state >> pinB) & 0x01;
+void Motor::incrementEncoder1() {
+  uint8_t pin_state = MOT1_REG;
+  uint8_t a = (pin_state >> MOT1_ENCA_PIN) & 0x01;
+  uint8_t b = (pin_state >> MOT1_ENCB_PIN) & 0x01;
 
   if (a == b) {
     encCount++;
@@ -137,14 +145,26 @@ void Motor::incrementEncoder() {
   }
 }
 
-ISR(INT0_vect) {
-  if(Motor::motor1 != nullptr) {
-    Motor::motor1->incrementEncoder();
+void Motor::incrementEncoder2() {
+  uint8_t pin_state = MOT2_REG;
+  uint8_t a = (pin_state >> MOT2_ENCA_PIN) & 0x01;
+  uint8_t b = (pin_state >> MOT2_ENCB_PIN) & 0x01;
+
+  if (a == b) {
+    encCount++;
+  } else {
+    encCount--; 
   }
 }
 
-ISR(INT2_vect) {
+ISR(PCINT1_vect) {
+  if(Motor::motor1 != nullptr) {
+    Motor::motor1->incrementEncoder1();
+  }
+}
+
+ISR(PCINT2_vect) {
   if(Motor::motor2 != nullptr) {
-    Motor::motor2->incrementEncoder();
+    Motor::motor2->incrementEncoder2();
   }
 }
