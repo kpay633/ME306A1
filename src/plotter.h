@@ -3,9 +3,11 @@
 #ifndef PLOTTER_H
 #define PLOTTER_H
 
+class Motor;
+
 class Plotter {
     public:
-        Plotter();
+        Plotter(Motor* Motor_A, Motor* Motor_B);
         float *get_current_pos();
         void set_current_pos(float pos[2]);
         float *get_target_pos();
@@ -28,6 +30,8 @@ class Plotter {
         float target_pos[2];
         float delta_pos[2];
         float left_boundary, right_boundary, top_boundary, bottom_boundary;
+        Motor* motor_A;
+        Motor* motor_B;
 };
 
 #endif // PLOTTER_H
