@@ -2,35 +2,36 @@
 #define GCODEPARSER_HPP
 
 #include <Arduino.h>
+#include <math.h> // for NAN
 
-enum class CommandType { //enum class can only contain enumerators, not any other field
+enum class CommandType { 
     NONE,
-    G1,   // Move
-    G28,   // Home
+    G1,   
+    G28,  
     M999
 };
 
-struct GCodeCommand { //must be a struct as has specific types. 
+struct GCodeCommand { 
     CommandType type;
     float x;
     float y;
 };
 
-
 class GCodeParser {
   private:
     bool command_present;
-    GCodeCommand previous_command; // THIS IS FOR IF THEY DONT PUT IN A Y VAL, ASSUME IT WAS SAME AS LAST. 
+    GCodeCommand previous_command; // stores last X/Y
+    GCodeCommand parseLine(const char* line);
+    char user_input[128]; // Increased buffer size for safety
+    int idx = 0;
+
 
 
   public:
     GCodeParser();
-  
-    bool hasCommand(); // This is true if message has been received... hence can activate state transition
-    int getCommand(); // If hasCommand, will get command in main and then act on that. 
-    GCodeCommand parseLine(const char* user_input);
-    GCodeCommand check_user_input()
+    bool hasCommand();
+    int getCommand();
+    GCodeCommand check_user_input(); 
 };
-
 
 #endif // GCODEPARSER_HPP
