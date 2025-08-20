@@ -25,6 +25,8 @@ class Plotter {
         void set_top_boundary(float boundary);
         void set_bottom_boundary(float boundary);
 
+        void test_encoders();
+
     private:
         float current_pos[2];
         float target_pos[2];

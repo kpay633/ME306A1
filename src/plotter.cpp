@@ -203,6 +203,67 @@ void Plotter::home() {
     current_pos[1] = get_bottom_boundary();
 }
 
+void Plotter::move_to_target(float x_target, float y_target, float speed) {
+    Serial.println("=== Simple move_to_target ===");
+    
+    const float POSITION_TOLERANCE = 0.1;
+    int iteration = 0;
+    const int MAX_ITERATIONS = 100; // Prevent infinite loop
+
+    while (iteration < MAX_ITERATIONS) {
+        iteration++;
+        
+        // Get current X/Y position
+        float* current = get_current_pos();
+        float delta_x = x_target - current[0];
+        float delta_y = y_target - current[1];
+
+        Serial.print("Iter "); Serial.print(iteration);
+        Serial.print(" | Current: ("); Serial.print(current[0], 4);
+        Serial.print(", "); Serial.print(current[1], 4);
+        Serial.print(") | Target: ("); Serial.print(x_target);
+        Serial.print(", "); Serial.print(y_target);
+        Serial.print(") | Error: ("); Serial.print(delta_x, 4);
+        Serial.print(", "); Serial.print(delta_y, 4);
+        
+
+        // Check if we're close enough
+        if (fabs(delta_x) < POSITION_TOLERANCE && fabs(delta_y) < POSITION_TOLERANCE) {
+            Serial.println("Position reached!");
+            break;
+        }
+
+        // Convert X/Y error to motor movements
+        float motorA_move = delta_x + delta_y;
+        float motorB_move = delta_x - delta_y;
+
+        Serial.print("Motor moves - A: "); Serial.print(motorA_move, 4);
+        Serial.print(", B: "); Serial.println(motorB_move, 4);
+
+        // Move motors (proportional control would be better here)
+        Direction dir_A = (motorA_move >= 0) ? Direction::CCW : Direction::CW;
+        Direction dir_B = (motorB_move >= 0) ? Direction::CCW : Direction::CW;
+
+        motor_A->move_motor(MotorID::M1, speed, dir_A);
+        motor_B->move_motor(MotorID::M2, speed, dir_B);
+
+        delay(100); // Increased delay to see changes better
+        
+        // Stop motors after each iteration to see if position changed
+        motor_A->stop_motor(MotorID::M1);
+        motor_B->stop_motor(MotorID::M2);
+        delay(50);
+    }
+    
+    if (iteration >= MAX_ITERATIONS) {
+        Serial.println("Max iterations reached - stopping!");
+    }
+
+    // Stop motors
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+}
+
 float Plotter::get_left_boundary() {
     return left_boundary;
 }

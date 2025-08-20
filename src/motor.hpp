@@ -38,7 +38,7 @@ class Motor {
     void move_motor(MotorID motorID, int voltage, Direction direction);
     void pcint_init();
 
-    int GetEncoderDist();
+    float GetEncoderDist();
     void ResetEncoder();
     void incrementEncoder1();
     void incrementEncoder2();

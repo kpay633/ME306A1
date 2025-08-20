@@ -37,7 +37,7 @@ int main() {
     Serial.begin(9600);
     sei();
 
-    plotter.test();
+    plotter.move_to_target(50,50,200);
 
 }
 

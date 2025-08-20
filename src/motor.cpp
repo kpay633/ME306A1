@@ -125,8 +125,9 @@ void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
   }
 }
 
-int Motor::GetEncoderDist() {
-  return encCount; // Convert counts to distance
+float Motor::GetEncoderDist() {
+  float temp = encCount * 13.5 * 3.14 / 24.0 / 172.0;
+  return temp; // Convert counts to distance
 }
 
 void Motor::ResetEncoder() {
