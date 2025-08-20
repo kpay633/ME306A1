@@ -6,20 +6,21 @@
 Motor* Motor::motor1 = nullptr;
 Motor* Motor::motor2 = nullptr;
 
-#define MOT1_ENCA_PIN PF0
-#define MOT1_ENCB_PIN PF1
+#define MOT1_ENCA_PIN PJ0
+#define MOT1_ENCB_PIN PJ1
 #define MOT2_ENCA_PIN PK0
 #define MOT2_ENCB_PIN PK1
 
-#define MOT1_REG PINF
+#define MOT1_REG PINJ
 #define MOT2_REG PINK
 
 
-Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin)
-  : voltage(voltage), motorID(motorID), pwm_pin(pwm_pin), enc_a_pin(enc_a_pin), enc_b_pin(enc_b_pin) {
+Motor::Motor(MotorID motorID)
+  : motorID(motorID) {
 
   DDRD &= ~(1 << PD0);
   DDRD &= ~(1 << PD1);
+  pcint_init();
 
   switch (motorID) {
     case MotorID::M1:
@@ -73,13 +74,13 @@ Motor::Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b
   }
 }
 
-void pcint_init(void) {
+void Motor::pcint_init(void) {
   // ------ MOTOR 1 ENCODER --------
-  DDRF &= ~((1 << MOT1_ENCA_PIN) | (1 << MOT1_ENCB_PIN)); 
+  DDRJ &= ~((1 << MOT1_ENCA_PIN) | (1 << MOT1_ENCB_PIN)); 
   DDRK &= ~((1 << MOT2_ENCA_PIN) | (1 << MOT2_ENCB_PIN));
 
   // Enable interupt on PB4 (PCINT4) (D10)
-  PCMSK1 |= (1 << PCINT8);
+  PCMSK1 |= (1 << PCINT9);
   PCMSK2 |= (1 << PCINT16);
 
   //Enable PCINT2 group
@@ -156,7 +157,7 @@ void Motor::incrementEncoder2() {
   }
 }
 
-ISR(PCINT0_vect) {
+ISR(PCINT1_vect) {
   if(Motor::motor1 != nullptr) {
     Motor::motor1->incrementEncoder1();
   }

@@ -30,12 +30,13 @@ class Motor {
     volatile uint16_t encCount;
 
   public:
-    Motor(int voltage, MotorID motorID, int pwm_pin, int enc_a_pin, int enc_b_pin);
+    Motor(MotorID motorID);
 
     // int get_voltage() const;
     
     void stop_motor(MotorID motorID);
     void move_motor(MotorID motorID, int voltage, Direction direction);
+    void pcint_init();
 
     int GetEncoderDist();
     void ResetEncoder();

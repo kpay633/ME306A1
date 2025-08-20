@@ -11,6 +11,7 @@ class Plotter {
         float *get_target_pos();
         void set_target_pos(float pos[2]);
         float *calc_pos_error(float current[2], float target[2]);
+        void test();
         void home();
         void move_to_target(float x, float y, float speed);
         float get_left_boundary();

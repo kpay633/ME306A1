@@ -33,8 +33,8 @@ int main() {
     Plotter plotter;
     Serial.begin(9600);
     cli();
-    Motor motor1(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN);  // voltage=0, timer=1, pwm_pin=PB1, enc_a=PD2, enc_b=PD3
-    Motor motor2(0, MotorID::M2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);  // another motor on Timer2 with different encoder pins
+    Motor motor1(MotorID::M1);  // voltage=0, timer=1, pwm_pin=PB1, enc_a=PD2, enc_b=PD3
+    Motor motor2(MotorID::M2);  // another motor on Timer2 with different encoder pins
     motor1.move_motor(MotorID::M1, 200, Direction::CW);
     motor2.move_motor(MotorID::M2, 200, Direction::CW);
 
