@@ -1,3 +1,5 @@
+// LATEST WORKING VERSION
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "limit_switch.hpp"
@@ -19,4 +21,3 @@ bool Limit_Switch::is_pressed() {
     // Returns true if the pin is low (pressed)
     // Returns false if the pin is high (not pressed)
 }
-

@@ -1,7 +1,10 @@
+// LATEST WORKING VERSION
+
 #include <avr/io.h>
 #include <Arduino.h>
 
 #include "motor.hpp"
+#include "plotter.h"
 
 #define MOT1_PWM_PIN PB1
 #define MOT2_PWM_PIN PB2

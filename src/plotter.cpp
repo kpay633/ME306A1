@@ -1,3 +1,5 @@
+// LATEST WORKING VERSION
+
 #include "plotter.h"
 #include "limit_switch.hpp"
 #include "motor.hpp"
@@ -214,64 +216,4 @@ void Plotter::set_top_boundary(float boundary) {
 
 void Plotter::set_bottom_boundary(float boundary) {
     bottom_boundary = boundary;
-}
-
-void Plotter::move_to_target(float x, float y, int speed) {
-    // Implement the logic to move the plotter to the target position (x, y) at the specified speed
-    // This will involve calculating the necessary motor movements and updating current_pos accordingly
-    // For now, we will just set the target position
-    current_pos[0] = 0.0;
-    current_pos[1] = 0.0;
-
-    target_pos[0] = x;
-    target_pos[1] = y;
-
-    motor_A.ResetEncoder();
-    motor_B.ResetEncoder();
-
-    while (true){
-        calc_pos_error(current_pos, target_pos);
-
-        // Check if the error is within a small threshold
-        if (std::abs(delta_pos[0]) < 0.01 && std::abs(delta_pos[1]) < 0.01) {
-            break; // Target reached
-        }
-
-        while (abs(delta_pos[0]) > 0.01) {
-            if (delta_pos[0] > 0) {
-            motor_A.move_motor(MotorID::M1, speed, Direction::CCW);
-            motor_B.move_motor(MotorID::M2, speed, Direction::CCW);
-            } else {
-            motor_A.move_motor(MotorID::M1, speed, Direction::CW);
-            motor_B.move_motor(MotorID::M2, speed, Direction::CW);
-            }
-            current_pos[0] += (motor_A.GetEncoderDist() + motor_B.GetEncoderDist()) / 2; // Update current position based on motor movement
-            calc_pos_error(current_pos, target_pos);
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-
-        motor_A.stop_motor(MotorID::M1);
-        motor_B.stop_motor(MotorID::M2);
-
-        while (abs(delta_pos[1]) > 0.01) {
-            if (delta_pos[1] > 0) {
-                motor_A.move_motor(MotorID::M1, speed, Direction::CCW);
-                motor_B.move_motor(MotorID::M2, speed, Direction::CW);
-            } else {
-                motor_A.move_motor(MotorID::M1, speed, Direction::CW);
-                motor_B.move_motor(MotorID::M2, speed, Direction::CCW);
-            }
-            current_pos[1] += (motor_A.GetEncoderDist() - motor_B.GetEncoderDist()) / 2; // Update current position based on motor movement
-            calc_pos_error(current_pos, target_pos);
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-
-        motor_A.stop_motor(MotorID::M1);
-        motor_B.stop_motor(MotorID::M2);
-    }
-
-    // After reaching the target position, update the current position
-    current_pos[0] = target_pos[0];
-    current_pos[1] = target_pos[1];
-    std::cout << "Moved to target position: (" << current_pos[0] << ", " << current_pos[1] << ")\n";
 }
