@@ -9,8 +9,8 @@
 
 class Limit_Switch {
     public:
-        Limit_Switch(volatile uint8_t *ddr, volatile uint8_t *pinr, volatile uint8_t *port, uint8_t bit);
-        bool is_pressed();
+        Limit_Switch();
+        bool is_pressed(uint8_t pin);
 
     private:
         volatile uint8_t *pin_register;

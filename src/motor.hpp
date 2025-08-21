@@ -29,6 +29,8 @@ class Motor {
 
     volatile uint16_t encCount;
 
+    bool disabled = false;
+
   public:
     Motor(MotorID motorID);
 
@@ -38,10 +40,15 @@ class Motor {
     void move_motor(MotorID motorID, int voltage, Direction direction);
     void pcint_init();
 
-    int GetEncoderDist();
+    float GetEncoderDist();
     void ResetEncoder();
     void incrementEncoder1();
     void incrementEncoder2();
+    void Increment();
+    void Decrement();
+
+    void DisableMotor();
+    void EnableMotor();
 
     static Motor* motor1;
     static Motor* motor2;
