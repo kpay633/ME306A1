@@ -12,12 +12,18 @@
 #define MOT2_ENCA_PIN PD2
 #define MOT2_ENCB_PIN PD3
 
-Limit_Switch limit_switch_left(&DDRB, &PINB, &PORTB, PB7), limit_switch_right(&DDRB, &PINB, &PORTB, PB6), limit_switch_top(&DDRB, &PINB, &PORTB, PB4), limit_switch_bottom(&DDRB, &PINB, &PORTB, PB5);
+#define SWTOP PD2
+#define SWBOTTOM PD3
+#define SWRIGHT PE4
+#define SWLEFT PE5
+
 // Motor motor_A(MotorID::M1), motor_B(MotorID::M2);
 
 int nominal_speed = 200; // Default speed for motors
 int approach_speed = 80; // Speed for approaching limit switches
 int retreat_time = 100; // Time to retreat after hitting a limit switch
+
+Limit_Switch limitSwitch;
 
 Plotter::Plotter(Motor* Motor_A, Motor* Motor_B) : motor_A(Motor_A), motor_B(Motor_B) {
     current_pos[0] = 0.0;
@@ -30,24 +36,147 @@ Plotter::Plotter(Motor* Motor_A, Motor* Motor_B) : motor_A(Motor_A), motor_B(Mot
     right_boundary = 0.0;
     top_boundary = 0.0;
     bottom_boundary = 0.0;
+    motor_A->ResetEncoder();
+    motor_B->ResetEncoder();
+
 }
 
 void Plotter::test(){
     motor_A->move_motor(MotorID::M1, 200, Direction::CW);
     motor_B->move_motor(MotorID::M2, 200, Direction::CW);
 
-        while(1) {
-      Serial.print("X ");
-      Serial.print(get_current_pos()[0]);
-      Serial.print(" Y ");
-      Serial.println(get_current_pos()[1]);
-  }
+
+
+    //     while(1) {
+    //   Serial.print("X ");
+    //   Serial.print(get_current_pos()[0]);
+    //   Serial.print(" Y ");
+    //   Serial.println(get_current_pos()[1]);
+//   }
 
 }
 
+void Plotter::MoveTo(){
+   motor_A->ResetEncoder();
+   motor_B->ResetEncoder();
+
+   float error = 42.39 - motor_A->GetEncoderDist();
+   int k_p = 2;
+   int control_effort = int(error * k_p);
+   Direction direction = Direction::CW;
+   
+   while(abs(error) > 1){
+    error = 42.39 - motor_A->GetEncoderDist();
+    control_effort = int(abs(error) * k_p + 140);
+    if (control_effort > 255){
+        control_effort = 255;
+    }
+    if (error < 0){
+        direction = Direction::CW;
+    } else {
+        direction = Direction::CCW;
+    }
+    motor_A->move_motor(MotorID::M1, (control_effort), direction);
+    Serial.print("ENC A ");
+    Serial.print(motor_A->GetEncoderDist());
+    Serial.print(" ERROR = ");
+    Serial.println(error);
+
+   }
+   motor_A->stop_motor(MotorID::M1);
+   motor_B->stop_motor(MotorID::M2);
+}
+
+void Plotter::move_to_target(float x_target, float y_target, float speed) {
+    Serial.println("=== Simple move_to_target ===");
+
+    // if (x_target > get_right_boundary() || x_target < 0 || y_target > get_top_boundary() || y_target < 0){
+    //     Serial.print("ERROR - OUTSIDE BOUNDS");
+    //     return;
+    // }
+
+    int kp_x = 1;
+    int kp_y = 1;
+    float control_effort_X;
+    float control_effort_Y;
+    int motorA_move;
+    int motorB_move;
+    
+    const float POSITION_TOLERANCE = 5;
+    int iteration = 0;
+    const int MAX_ITERATIONS = 200; // Prevent infinite loop
+
+    while (iteration < MAX_ITERATIONS) {
+        iteration++;
+        
+        // Get current X/Y position
+        float* current = get_current_pos();
+        float delta_x = x_target - current[0];
+        float delta_y = y_target - current[1];
+
+        Serial.print("Iter "); Serial.print(iteration);
+        Serial.print(" | Current: ("); Serial.print(current[0], 4);
+        Serial.print(", "); Serial.print(current[1], 4);
+        Serial.print(") | Target: ("); Serial.print(x_target);
+        Serial.print(", "); Serial.print(y_target);
+        Serial.print(") | Error: ("); Serial.print(delta_x, 4);
+        Serial.print(", "); Serial.print(delta_y, 4);
+        
+
+        // Check if we're close enough
+        if (abs(delta_x) < POSITION_TOLERANCE && abs(delta_y) < POSITION_TOLERANCE) {
+            Serial.println("Position reached!");
+            break;
+        }
+
+        control_effort_X = delta_x * kp_x;
+        control_effort_Y = delta_y * kp_y;
+
+        motorA_move = control_effort_X + control_effort_Y;
+        motorB_move = control_effort_X - control_effort_Y;
+        // Convert X/Y error to motor movements
+
+
+        // Move motors (proportional control would be better here)
+        Direction dir_A = (motorA_move >= 0) ? Direction::CCW : Direction::CW;
+        Direction dir_B = (motorB_move >= 0) ? Direction::CW : Direction::CCW;
+
+        motorA_move = abs(motorA_move);
+        motorB_move = abs(motorB_move);
+
+        if (motorA_move > 200){
+            motorA_move = 200;
+        }
+
+        if (motorB_move > 200){
+            motorB_move = 200;
+        }
+
+        Serial.print("Motor moves - A: "); Serial.print(motorA_move, 4);
+        Serial.print(", B: "); Serial.println(motorB_move, 4);
+
+        motor_A->move_motor(MotorID::M1, (motorA_move + 140), dir_A);
+        motor_B->move_motor(MotorID::M2, (motorB_move + 140), dir_B);
+
+
+        
+        // // Stop motors after each iteration to see if position changed
+        // motor_A->stop_motor(MotorID::M1);
+        // motor_B->stop_motor(MotorID::M2);
+        }
+    
+    if (iteration >= MAX_ITERATIONS) {
+        Serial.println("Max iterations reached - stopping!");
+    }
+
+    // Stop motors
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+}
+
 float *Plotter::get_current_pos() {
-    float a = motor_A->GetEncoderDist() * 13.5 * 3.14 / 24.0 / 172.0;
-    float b = motor_B->GetEncoderDist() * 13.5 * 3.14 / 24.0 / 172.0;
+    float a = motor_A->GetEncoderDist();
+    float b = motor_B->GetEncoderDist();
     current_pos[0] = (a + b) / 2.0;
     current_pos[1] = (a - b) / 2.0;
     return current_pos;
@@ -74,133 +203,64 @@ float *Plotter::calc_pos_error(float current_pos[2], float target_pos[2]) {
 }
 
 void Plotter::home() {
+    while (!limitSwitch.is_pressed(SWLEFT))
+    {
+        Serial.print("X ");
+      Serial.print(get_current_pos()[0]);
+      Serial.print(" Y ");
+      Serial.println(get_current_pos()[1]);      
+      motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
+    motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+    }
+    
+    set_left_boundary(0);
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+
+    while (!limitSwitch.is_pressed(SWBOTTOM))
+    {
+      Serial.print("X ");
+      Serial.print(get_current_pos()[0]);
+      Serial.print(" Y ");
+      Serial.println(get_current_pos()[1]); 
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW); 
+    }
+    set_bottom_boundary(0);
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+
     motor_A->ResetEncoder();
     motor_B->ResetEncoder();
 
-    while (!limit_switch_left.is_pressed()) {
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW);
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
+    while (!limitSwitch.is_pressed(SWRIGHT))
+    {
+        Serial.print("X ");
+      Serial.print(get_current_pos()[0]);
+      Serial.print(" Y ");
+      Serial.println(get_current_pos()[1]); 
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW); 
     }
 
+    set_right_boundary(get_current_pos()[0]);
     motor_A->stop_motor(MotorID::M1);
     motor_B->stop_motor(MotorID::M2);
 
-    // if (limit_switch_left.is_pressed()) {
-    //     motor_A.stop_motor(MotorID::M1);
-    //     motor_B.stop_motor(MotorID::M2);
-    //     motor_A.move_motor(MotorID::M1, nominal_speed, Direction::CCW);
-    //     motor_B.move_motor(MotorID::M2, nominal_speed, Direction::CCW);
-    //     while (!limit_switch_left.is_pressed()) {
-    //         motor_A.clockwise(approach_speed, 0);
-    //         motor_B.clockwise(approach_speed, 0);
-    //     }
-    //     motor_A.stop_motor(MotorID::M1);
-    //     motor_B.stop_motor(MotorID::M2);
-    //     motor_A.ResetEncoder();
-    //     motor_B.ResetEncoder();
-    //     set_left_boundary(0.0);
-
-    //     motor_A.anticlockwise(nominal_speed, retreat_time);
-    //     motor_B.anticlockwise(nominal_speed, retreat_time);
-    // }
-
-    while (!limit_switch_right.is_pressed()) {
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW);
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+    while (!limitSwitch.is_pressed(SWTOP))
+    {
+        Serial.print("X ");
+      Serial.print(get_current_pos()[0]);
+      Serial.print(" Y ");
+      Serial.println(get_current_pos()[1]); 
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW); 
     }
 
+    set_top_boundary(get_current_pos()[1]);
     motor_A->stop_motor(MotorID::M1);
     motor_B->stop_motor(MotorID::M2);
-
-    // if (limit_switch_right.is_pressed()) {
-    //     motor_A.stop_motor(MotorID::M1);
-    //     motor_B.stop_motor(MotorID::M2);
-    //     motor_A.clockwise(nominal_speed, retreat_time);
-    //     motor_B.clockwise(nominal_speed, retreat_time);
-    //     while (!limit_switch_right.is_pressed()) {
-    //         motor_A.anticlockwise(approach_speed, 0);
-    //         motor_B.anticlockwise(approach_speed, 0);
-    //     }
-    //     motor_A.stop_motor(MotorID::M1);
-    //     motor_B.stop_motor(MotorID::M2);
-
-    //     set_right_boundary((motor_A.GetEncoderDist() + motor_B.GetEncoderDist()) / 2);
-
-    //     motor_A.clockwise(nominal_speed, retreat_time);
-    //     motor_B.clockwise(nominal_speed, retreat_time);
-    // }
-
-    while (!limit_switch_bottom.is_pressed()) {
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW);
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
-    }
-
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-
-    // if (limit_switch_bottom.is_pressed()) {
-    //     motor_A.stop_motor(MotorID::M1);
-    //     motor_B.stop_motor(MotorID::M2);
-    //     motor_A.anticlockwise(nominal_speed, retreat_time);
-    //     motor_B.clockwise(nominal_speed, retreat_time);
-    //     while (!limit_switch_bottom.is_pressed()) {
-    //         motor_A.clockwise(approach_speed, 0);
-    //         motor_B.anticlockwise(approach_speed, 0);
-    //     }
-    //     motor_A.stop_motor(MotorID::M1);
-    //     motor_B.stop_motor(MotorID::M2);
-
-    //     motor_A.ResetEncoder();
-    //     motor_B.ResetEncoder();
-
-    //     set_bottom_boundary(0.0);
-
-    //     motor_A.anticlockwise(nominal_speed, retreat_time);
-    //     motor_B.clockwise(nominal_speed, retreat_time);
-    // }
-
-    while (!limit_switch_top.is_pressed()) {
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW);
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
-    }
-
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-
-    // if (limit_switch_top.is_pressed()) {
-    //     motor_A.stop_motor(MotorID::M1);
-    //     motor_B.stop_motor(MotorID::M2);
-    //     motor_A.clockwise(nominal_speed, retreat_time);
-    //     motor_B.anticlockwise(nominal_speed, retreat_time);
-    //     while (!limit_switch_top.is_pressed()) {
-    //         motor_A.anticlockwise(approach_speed, 0);
-    //         motor_B.clockwise(approach_speed, 0);
-    //     }
-    //     motor_A.stop_motor(MotorID::M1);
-    //     motor_B.stop_motor(MotorID::M2);
-
-    //     set_top_boundary((motor_A.GetEncoderDist() - motor_B.GetEncoderDist()) / 2);
-
-    //     motor_A.clockwise(nominal_speed, retreat_time);
-    //     motor_B.anticlockwise(nominal_speed, retreat_time);
-    // }
-
-    // while (!limit_switch_bottom.is_pressed()) {
-    //     motor_A.move_motor(MotorID::M1, approach_speed, Direction::CW);
-    //     motor_B.move_motor(MotorID::M2, approach_speed, Direction::CCW);
-    // }
-    // motor_A.stop_motor(MotorID::M1);
-    // motor_B.stop_motor(MotorID::M2);
-
-    // while (!limit_switch_left.is_pressed()) {
-    //     motor_A.move_motor(MotorID::M1, approach_speed, Direction::CW);
-    //     motor_B.move_motor(MotorID::M2, approach_speed, Direction::CW);
-    // }
-    // motor_A.stop_motor(MotorID::M1);
-    // motor_B.stop_motor(MotorID::M2);
-
-    current_pos[0] = get_left_boundary();
-    current_pos[1] = get_bottom_boundary();
+    
 }
 
 float Plotter::get_left_boundary() {

@@ -45,6 +45,8 @@ Motor::Motor(MotorID motorID)
       pinA = PD0;
       pinB = PD1;
 
+      disabled = false;
+
       motor1 = this;
       break;
 
@@ -69,6 +71,8 @@ Motor::Motor(MotorID motorID)
       pinA = enc_a_pin;
       pinB = enc_b_pin;
 
+      disabled = false;
+
       motor2 = this;
       break;
   }
@@ -82,6 +86,9 @@ void Motor::pcint_init(void) {
   // Enable interupt on PB4 (PCINT4) (D10)
   PCMSK1 |= (1 << PCINT9);
   PCMSK2 |= (1 << PCINT16);
+
+  PORTJ |= (1 << MOT1_ENCA_PIN) | (1 << MOT1_ENCB_PIN);
+  PORTK |= (1 << MOT2_ENCA_PIN) | (1 << MOT2_ENCB_PIN);
 
   //Enable PCINT2 group
   PCICR |= (1 << PCIE1) | (1 << PCIE2);
@@ -99,6 +106,7 @@ void Motor::stop_motor(MotorID motorID) {
 }
 
 void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
+  // if (!disabled){
   if (new_voltage < 0) new_voltage = 0;
   if (new_voltage > 255) new_voltage = 255;
 
@@ -122,11 +130,23 @@ void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
 
       OCR4A = voltage;
       break;
-  }
+  // }
+}
 }
 
-int Motor::GetEncoderDist() {
-  return encCount; // Convert counts to distance
+void Motor::DisableMotor(){
+    disabled = true;
+    stop_motor(MotorID::M1);
+    stop_motor(MotorID::M2);
+}
+
+void Motor::EnableMotor(){
+  disabled = false;
+}
+
+float Motor::GetEncoderDist() {
+  float temp = encCount * 13.5 * 3.14 / 24.0 / 172.0;
+  return temp; // Convert counts to distance
 }
 
 void Motor::ResetEncoder() {
@@ -151,9 +171,9 @@ void Motor::incrementEncoder2() {
   uint8_t b = (pin_state >> MOT2_ENCB_PIN) & 0x01;
 
   if (a == b) {
-    encCount++;
+    encCount--;
   } else {
-    encCount--; 
+    encCount++; 
   }
 }
 
