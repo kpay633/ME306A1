@@ -13,14 +13,15 @@
 
   enum class State {
       IDLE,
-      HOMING,
       MOVING,
+      HOMING,
       FAULT
   };
 
 
 
   void new_state(State);
+
   // void doIdle(Plotter&);
   // void doHoming(Plotter&);
   // void doMoving(Plotter&);
@@ -35,8 +36,6 @@
     cli();
     // timer1_init();
     sei();
-
-
     // Plotter plotter; 
 
 
@@ -48,37 +47,39 @@
 
     while (1) {
       cmd = parser.check_user_input();  // will return NONE if no new input
-      
-      if (cmd.type != CommandType::NONE) {
-        switch(global_state) {
-          case State::IDLE:
-            if(cmd.type == CommandType::G1) {
-              // new_state(State::MOVING); 
-              Serial.println("Switching state to MOVING.");
-            }
-            else if(cmd.type == CommandType::G28) {
-              new_state(State::HOMING);
-            }
-            else if(cmd.type == CommandType::M999) {
-              // doFault(plotter);
-              Serial.println("Switching state to FAULT.");
 
-            }
-            // doIdle(plotter);
-            break;
-
-          case State::HOMING:
-            // doHoming(plotter);
-            break;
-
-          case State::MOVING:
-            // doMoving(plotter);
-            break;
-
-          case State::FAULT:
+      switch(global_state) {
+        case State::IDLE:
+          if(cmd.type == CommandType::G1) {
+            new_state(State::MOVING); 
+          }
+          else if(cmd.type == CommandType::G28) {
+            new_state(State::HOMING);
+          }
+          else if(cmd.type == CommandType::M999) {
             // doFault(plotter);
-            break;
-        }
+            Serial.println("Switching state to FAULT.");
+
+          }
+          // doIdle(plotter);
+          break;
+
+
+
+        case State::MOVING:
+          // doMoving(plotter);
+          Serial.println("now its going to pass in x and y int moving motor");
+          break;
+          
+        case State::HOMING:
+          // doHoming(plotter);
+          Serial.println("yay homing");
+
+          break;
+
+        case State::FAULT:
+          // doFault(plotter);
+          break;
       }
     }
 
@@ -87,19 +88,24 @@
 
   }
 
-  void new_state(State s) {
-      global_state = s;
-      Serial.println("Switching state to s");
-  }
+void new_state(State s) {
+  global_state = s;
+  Serial.print("Switching state to ");
+  Serial.println(static_cast<int>(s)); // Prints the integer value of the enum
+}
+
+
   // void doIdle(Plotter& plotter) {
 
   // }
+
+  // void doMoving(Plotter& plotter) {
+  //   plotter.position(x, y);
+  // }
+
   // void doHoming(Plotter& plotter) {
   //     plotter.home();
   //     new_state(IDLE);
-  // }
-  // void doMoving(Plotter& plotter) {
-  //   plotter.position(x, y);
   // }
   // void doFault(Plotter& plotter) {
   //   //print an error message and stop everything. 

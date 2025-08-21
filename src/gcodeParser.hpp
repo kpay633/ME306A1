@@ -6,8 +6,8 @@
 
 enum class CommandType { 
     NONE,
-    G1,   
-    G28,  
+    G1,   // moving. position
+    G28,  // home
     M999
 };
 
