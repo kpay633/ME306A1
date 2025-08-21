@@ -1,5 +1,4 @@
 // LATEST WORKING VERSION
-
 #include "plotter.h"
 #include "limit_switch.hpp"
 #include "motor.hpp"
@@ -12,7 +11,7 @@
 #define MOT2_ENCA_PIN PD2
 #define MOT2_ENCB_PIN PD3
 
-Limit_Switch limit_switch_left(&DDRB, &PINB, &PORTB, PB7), limit_switch_right(&DDRB, &PINB, &PORTB, PB6), limit_switch_top(&DDRB, &PINB, &PORTB, PB4), limit_switch_bottom(&DDRB, &PINB, &PORTB, PB5);
+Limit_Switch limit_switch_left(5), limit_switch_right(4), limit_switch_top(2), limit_switch_bottom(3);
 Motor motor_A(0, MotorID::M1, MOT1_PWM_PIN, MOT1_ENCA_PIN, MOT1_ENCB_PIN), motor_B(0, MotorID::M2, MOT2_PWM_PIN, MOT2_ENCA_PIN, MOT2_ENCB_PIN);
 
 int nominal_speed = 200; // Default speed for motors

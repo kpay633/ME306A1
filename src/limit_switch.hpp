@@ -1,22 +1,23 @@
-// LATEST WORKING VERSION
-
-#ifndef LIMIT_SWITCH_H
-#define LIMIT_SWITCH_H
+#ifndef LIMIT_SWITCH_HPP
+#define LIMIT_SWITCH_HPP
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdint.h>
 
 class Limit_Switch {
-    public:
-        Limit_Switch(volatile uint8_t *ddr, volatile uint8_t *pinr, volatile uint8_t *port, uint8_t bit);
-        bool is_pressed();
+public:
+    Limit_Switch(uint8_t int_num);
+    bool is_pressed();
+    
+    // Public static members for ISR access
+    static volatile bool pressed_flags[6];
+    static volatile uint32_t last_interrupt_time[6];
+    static volatile uint32_t system_tick;
 
-    private:
-        volatile uint8_t *pin_register;
-        volatile uint8_t *ddr_register;
-        volatile uint8_t *port_register;
-        uint8_t bit;
+private:
+    uint8_t int_num;
+    static void setup_system_timer();
 };
 
-#endif // LIMIT_SWITCH_H
+#endif // LIMIT_SWITCH_HPP
