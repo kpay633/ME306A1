@@ -20,8 +20,8 @@
 // Motor motor_A(MotorID::M1), motor_B(MotorID::M2);
 
 int nominal_speed = 200; // Default speed for motors
-int approach_speed = 80; // Speed for approaching limit switches
-int retreat_time = 100; // Time to retreat after hitting a limit switch
+int approach_speed = 160; // Speed for approaching limit switches
+int retreat_time = 500; // Time to retreat after hitting a limit switch
 
 Limit_Switch limitSwitch;
 
@@ -202,66 +202,171 @@ float *Plotter::calc_pos_error(float current_pos[2], float target_pos[2]) {
     return delta_pos;
 }
 
-void Plotter::home() {
-    while (!limitSwitch.is_pressed(SWLEFT))
-    {
-        Serial.print("X ");
-      Serial.print(get_current_pos()[0]);
-      Serial.print(" Y ");
-      Serial.println(get_current_pos()[1]);      
-      motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
-    motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
-    }
+// void Plotter::home() {
+//     while (!limitSwitch.is_pressed(SWLEFT))
+//     {
+//         Serial.print("X ");
+//       Serial.print(get_current_pos()[0]);
+//       Serial.print(" Y ");
+//       Serial.println(get_current_pos()[1]);      
+//       motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
+//     motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+//     }
     
-    set_left_boundary(0);
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
+//     set_left_boundary(0);
+//     motor_A->stop_motor(MotorID::M1);
+//     motor_B->stop_motor(MotorID::M2);
 
-    while (!limitSwitch.is_pressed(SWBOTTOM))
-    {
-      Serial.print("X ");
-      Serial.print(get_current_pos()[0]);
-      Serial.print(" Y ");
-      Serial.println(get_current_pos()[1]); 
+//     while (!limitSwitch.is_pressed(SWBOTTOM))
+//     {
+//       Serial.print("X ");
+//       Serial.print(get_current_pos()[0]);
+//       Serial.print(" Y ");
+//       Serial.println(get_current_pos()[1]); 
+//         motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
+//         motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW); 
+//     }
+//     set_bottom_boundary(0);
+//     motor_A->stop_motor(MotorID::M1);
+//     motor_B->stop_motor(MotorID::M2);
+
+//     motor_A->ResetEncoder();
+//     motor_B->ResetEncoder();
+
+//     while (!limitSwitch.is_pressed(SWRIGHT))
+//     {
+//         Serial.print("X ");
+//       Serial.print(get_current_pos()[0]);
+//       Serial.print(" Y ");
+//       Serial.println(get_current_pos()[1]); 
+//         motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
+//         motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW); 
+//     }
+
+//     set_right_boundary(get_current_pos()[0]);
+//     motor_A->stop_motor(MotorID::M1);
+//     motor_B->stop_motor(MotorID::M2);
+
+//     while (!limitSwitch.is_pressed(SWTOP))
+//     {
+//         Serial.print("X ");
+//       Serial.print(get_current_pos()[0]);
+//       Serial.print(" Y ");
+//       Serial.println(get_current_pos()[1]); 
+//         motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
+//         motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW); 
+//     }
+
+//     set_top_boundary(get_current_pos()[1]);
+//     motor_A->stop_motor(MotorID::M1);
+//     motor_B->stop_motor(MotorID::M2);
+    
+// }
+
+void Plotter::home() {
+    Serial.println("=== HOMING START ===");
+
+    // --- LEFT (X min) ---
+    while (!limitSwitch.is_pressed(SWLEFT)) {
         motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW); 
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
     }
-    set_bottom_boundary(0);
     motor_A->stop_motor(MotorID::M1);
     motor_B->stop_motor(MotorID::M2);
+    
+    // Back off
+    motor_A->move_time(MotorID::M1, retreat_time, Direction::CCW);
+    motor_B->move_time(MotorID::M2, retreat_time, Direction::CW);
+    delay(50);
+
+    while (!limitSwitch.is_pressed(SWLEFT)) {
+        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
+        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
+    }
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+    set_left_boundary(0);
 
     motor_A->ResetEncoder();
     motor_B->ResetEncoder();
 
-    while (!limitSwitch.is_pressed(SWRIGHT))
-    {
-        Serial.print("X ");
-      Serial.print(get_current_pos()[0]);
-      Serial.print(" Y ");
-      Serial.println(get_current_pos()[1]); 
+    // --- RIGHT (X max) ---
+    while (!limitSwitch.is_pressed(SWRIGHT)) {
         motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW); 
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
     }
-
-    set_right_boundary(get_current_pos()[0]);
     motor_A->stop_motor(MotorID::M1);
     motor_B->stop_motor(MotorID::M2);
 
-    while (!limitSwitch.is_pressed(SWTOP))
-    {
-        Serial.print("X ");
-      Serial.print(get_current_pos()[0]);
-      Serial.print(" Y ");
-      Serial.println(get_current_pos()[1]); 
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW); 
-    }
+    // Back off
+    motor_A->move_time(MotorID::M1, retreat_time, Direction::CW);
+    motor_B->move_time(MotorID::M2, retreat_time, Direction::CCW);
+    delay(50);
 
-    set_top_boundary(get_current_pos()[1]);
+    while (!limitSwitch.is_pressed(SWRIGHT)) {
+        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
+        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
+    }
     motor_A->stop_motor(MotorID::M1);
     motor_B->stop_motor(MotorID::M2);
-    
+    float right_boundary = (get_current_pos()[0]);
+    set_right_boundary(right_boundary);
+
+    // --- BOTTOM (Y min) ---
+    while (!limitSwitch.is_pressed(SWBOTTOM)) {
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
+    }
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+
+    // Back off
+    motor_A->move_time(MotorID::M1, retreat_time, Direction::CCW);
+    motor_B->move_time(MotorID::M2, retreat_time, Direction::CCW);
+    delay(50);
+
+    while (!limitSwitch.is_pressed(SWBOTTOM)) {
+        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
+        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
+    }
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+    set_bottom_boundary(0);
+
+    // Reset encoders at home
+    motor_A->ResetEncoder();
+    motor_B->ResetEncoder();
+
+    // --- TOP (Y max) ---
+    while (!limitSwitch.is_pressed(SWTOP)) {
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+    }
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+
+    // Back off
+    motor_A->move_time(MotorID::M1, retreat_time, Direction::CW);
+    motor_B->move_time(MotorID::M2, retreat_time, Direction::CW);
+    delay(50);
+
+    while (!limitSwitch.is_pressed(SWTOP)) {
+        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
+        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
+    }
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+    float top_boundary = (get_current_pos()[1]);
+    set_top_boundary(top_boundary);
+
+    set_current_pos({right_boundary, top_boundary});
+
+    // --- Return to bottom-left (home) ---
+    move_to_target(0, 0, nominal_speed);
+
+    Serial.println("=== HOMING COMPLETE ===");
 }
+
 
 float Plotter::get_left_boundary() {
     return left_boundary;
