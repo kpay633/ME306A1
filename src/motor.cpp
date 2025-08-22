@@ -106,7 +106,7 @@ void Motor::stop_motor(MotorID motorID) {
 }
 
 void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
-  // if (!disabled){
+  if (!disabled){
   if (new_voltage < 0) new_voltage = 0;
   if (new_voltage > 255) new_voltage = 255;
 
@@ -130,7 +130,7 @@ void Motor::move_motor(MotorID motorID, int new_voltage, Direction direction) {
 
       OCR4A = voltage;
       break;
-  // }
+  }
 }
 }
 
@@ -144,6 +144,10 @@ void Motor::EnableMotor(){
   disabled = false;
 }
 
+bool Motor::IsDisabled(){
+  return disabled;
+}
+
 float Motor::GetEncoderDist() {
   float temp = encCount * 13.5 * 3.14 / 24.0 / 172.0;
   return temp; // Convert counts to distance
@@ -151,6 +155,10 @@ float Motor::GetEncoderDist() {
 
 void Motor::ResetEncoder() {
   encCount = 0; // Reset the encoder count to zero
+}
+
+int Motor::GetEncoderCounts(){
+  return encCount;
 }
 
 void Motor::incrementEncoder1() {

@@ -27,7 +27,7 @@ class Motor {
     int pinA;
     int pinB;
 
-    volatile uint16_t encCount;
+    volatile int32_t encCount;
 
     bool disabled = false;
 
@@ -41,6 +41,7 @@ class Motor {
     void pcint_init();
 
     float GetEncoderDist();
+    int GetEncoderCounts();
     void ResetEncoder();
     void incrementEncoder1();
     void incrementEncoder2();
@@ -49,6 +50,7 @@ class Motor {
 
     void DisableMotor();
     void EnableMotor();
+    bool IsDisabled();
 
     static Motor* motor1;
     static Motor* motor2;

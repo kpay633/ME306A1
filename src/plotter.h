@@ -1,4 +1,4 @@
-// LATEST WORKING VERSION
+\// LATEST WORKING VERSION
 
 #ifndef PLOTTER_H
 #define PLOTTER_H
@@ -10,6 +10,7 @@ enum class Target{
     Right,
     Up,
     Down,
+    None,
 };
 
 class Plotter {
@@ -24,6 +25,8 @@ class Plotter {
         void MoveTo();
         void MoveDist(Target target, int distance);
         void home();
+        void timer2_init();
+        void MoveTime(int time, Target target, int speed);
         void move_to_target(float x, float y, float speed);
         float get_left_boundary();
         float get_right_boundary();
@@ -33,6 +36,9 @@ class Plotter {
         void set_right_boundary(float boundary);
         void set_top_boundary(float boundary);
         void set_bottom_boundary(float boundary);
+        void IncrementTime();
+        Target GetAllowedSwitch1();
+        Target GetAllowedSwitch2();
 
     private:
         float current_pos[2];
@@ -41,6 +47,9 @@ class Plotter {
         float left_boundary, right_boundary, top_boundary, bottom_boundary;
         Motor* motor_A;
         Motor* motor_B;
+        int time;
+        Target allowed_switch = Target::None;
+        Target allowed_switch2 = Target::None;
 };
 
 #endif // PLOTTER_H
