@@ -54,14 +54,14 @@ int main() {
     // timer1_init();
     sei();
 
+
     while (1) {
       cmd = parser.check_user_input();  // will return NONE if no new input
 
       switch(global_state) {
         case State::IDLE:
-
           if(cmd.type == CommandType::G1) {
-            new_state(State::MOVING); 
+            new_state(State::MOVING); // THIS ASSUMES THAT plotter.moving() is non blocking.
             doMoving(cmd.x, cmd.y);
           }
           else if(cmd.type == CommandType::G28) {
@@ -74,8 +74,10 @@ int main() {
           }
           break;
         case State::MOVING:
-          // Serial.println("in state moving.");
-          // need to get a signal that says 'moving done'
+          // Check if movement is done.
+          if (plotter->is_moving_done()) {
+            new_state(State::IDLE);
+          }
           break;
           
         case State::HOMING:
@@ -118,7 +120,7 @@ void doMoving(float x, float y) {
 }
 
 void doHoming() {
-  plotter->home();
+  plotter->home(); //this assumes home() is NON-BLOCKING! it is atm...
   new_state(State::IDLE);
 }
 
