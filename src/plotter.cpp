@@ -287,6 +287,43 @@ void Plotter::home() {
     motor_B->stop_motor(MotorID::M2);
     set_left_boundary(0);
 
+    // Back off
+    motor_A->move_time(MotorID::M1, retreat_time, Direction::CCW);
+    motor_B->move_time(MotorID::M2, retreat_time, Direction::CW);
+    delay(50);
+
+        // --- BOTTOM (Y min) ---
+    while (!limitSwitch.is_pressed(SWBOTTOM)) {
+        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
+        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
+    }
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+
+    // Back off
+    motor_A->move_time(MotorID::M1, retreat_time, Direction::CCW);
+    motor_B->move_time(MotorID::M2, retreat_time, Direction::CCW);
+    delay(50);
+
+    while (!limitSwitch.is_pressed(SWBOTTOM)) {
+        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
+        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
+    }
+    motor_A->stop_motor(MotorID::M1);
+    motor_B->stop_motor(MotorID::M2);
+    set_bottom_boundary(0);
+
+    // Back off
+    motor_A->move_time(MotorID::M1, retreat_time, Direction::CCW);
+    motor_B->move_time(MotorID::M2, retreat_time, Direction::CCW);
+    delay(50);
+
+    while (!limitSwitch.is_pressed(SWLEFT) || !limitSwitch.is_pressed(SWBOTTOM)) {
+        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
+        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
+    }
+
+    // Reset encoders at home
     motor_A->ResetEncoder();
     motor_B->ResetEncoder();
 
@@ -311,31 +348,6 @@ void Plotter::home() {
     motor_B->stop_motor(MotorID::M2);
     float right_boundary = (get_current_pos()[0]);
     set_right_boundary(right_boundary);
-
-    // --- BOTTOM (Y min) ---
-    while (!limitSwitch.is_pressed(SWBOTTOM)) {
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
-    }
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-
-    // Back off
-    motor_A->move_time(MotorID::M1, retreat_time, Direction::CCW);
-    motor_B->move_time(MotorID::M2, retreat_time, Direction::CCW);
-    delay(50);
-
-    while (!limitSwitch.is_pressed(SWBOTTOM)) {
-        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
-        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
-    }
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-    set_bottom_boundary(0);
-
-    // Reset encoders at home
-    motor_A->ResetEncoder();
-    motor_B->ResetEncoder();
 
     // --- TOP (Y max) ---
     while (!limitSwitch.is_pressed(SWTOP)) {
