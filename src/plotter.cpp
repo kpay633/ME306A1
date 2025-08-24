@@ -1,23 +1,4 @@
-// LATEST WORKING VERSION
-
-#include "plotter.h"
-#include "limit_switch.hpp"
-#include "motor.hpp"
-
-#define MOT1_PWM_PIN PB1
-#define MOT2_PWM_PIN PB2
-
-#define MOT1_ENCA_PIN PD0
-#define MOT1_ENCB_PIN PD1
-#define MOT2_ENCA_PIN PD2
-#define MOT2_ENCB_PIN PD3
-
-#define SWTOP PD2
-#define SWBOTTOM PD3
-#define SWRIGHT PE4
-#define SWLEFT PE5
-
-// Motor motor_A(MotorID::M1), motor_B(MotorID::M2);
+#include "plotter.hpp"
 
 int nominal_speed = 200; // Default speed for motors
 int approach_speed = 160; // Speed for approaching limit switches
@@ -53,8 +34,6 @@ void Plotter::timer2_init() {
 void Plotter::test(){
     motor_A->move_motor(MotorID::M1, 200, Direction::CW);
     motor_B->move_motor(MotorID::M2, 200, Direction::CW);
-
-
 
     //     while(1) {
     //   Serial.print("X ");
@@ -254,12 +233,13 @@ float *Plotter::calc_pos_error(float current_pos[2], float target_pos[2]) {
     return delta_pos;
 }
 
-void Plotter::home() {
-    
-    Serial.println("=== HOMING START ===");
 
-    motor_A->EnableMotor();
-    motor_B->EnableMotor();
+
+
+
+
+void Plotter::start_homing() {
+    Serial.println("=== HOMING START ===");
 
     if (limitSwitch.is_pressed(SWLEFT)){
         allowed_switch = Target::Left;
@@ -285,210 +265,163 @@ void Plotter::home() {
         MoveTime(retreat_time, Target::Up, retreat_speed);
         Serial.println("Moved up");
     }
-
-    // --- LEFT (X min) ---
-    allowed_switch = Target::Left;
-    allowed_switch2 = Target::None;
-    while (!limitSwitch.is_pressed(SWLEFT)) {
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
-    }
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
     
-    // Back off
-    MoveTime(retreat_time, Target::Right, retreat_speed);
-    // delay(50);
-
-    // while (!limitSwitch.is_pressed(SWLEFT)) {
-    //     motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
-    //     motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
-    // }
-    // motor_A->stop_motor(MotorID::M1);
-    // motor_B->stop_motor(MotorID::M2);
-    // set_left_boundary(0);
-
-    // motor_A->ResetEncoder();
-    // motor_B->ResetEncoder();
-
-    // // Back off
-    // MoveTime(retreat_time, Target::Right, retreat_speed);
-    // // delay(50);
-
-        // --- BOTTOM (Y min) ---
-    allowed_switch = Target::Down;
-    while (!limitSwitch.is_pressed(SWBOTTOM)) {
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
-    }
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-
-    // Back off
-    MoveTime(retreat_time, Target::Up, retreat_speed);
-    // delay(50);
-
-    while (!limitSwitch.is_pressed(SWBOTTOM)) {
-        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
-        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
-    }
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-    set_bottom_boundary(0);
-
-    // // Back off
-    // MoveTime(500, Target::Up, retreat_speed);
-    // // delay(50);
-
-    // --- APPROACH LEFT AGAIN ---
-    allowed_switch2 = Target::Left;
-    while (!limitSwitch.is_pressed(SWLEFT)) {
-        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
-        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
-    }
-
-    // // --- APPROACH BOTTOM AGAIN ---
-    // while (!limitSwitch.is_pressed(SWBOTTOM)) {
-    //     motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
-    //     motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
-    // }
-
-
-    MoveTime(200, Target::Up, retreat_speed);
-    MoveTime(200, Target::Right, retreat_speed);
-
-    motor_A->ResetEncoder();
-    motor_B->ResetEncoder();
-    
-    Serial.print("reset encoders");
-    
-    // --- BACK OFF ---
-    MoveTime(retreat_time, Target::Right, retreat_speed);
-    MoveTime(retreat_time, Target::Up, retreat_speed);
-
-    // --- RIGHT (X max) ---
-    allowed_switch = Target::Right;
-    allowed_switch2 = Target::None;
-
-    while (!limitSwitch.is_pressed(SWRIGHT)) {
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
-    }
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-
-    // Back off
-    MoveTime(retreat_time, Target::Left, retreat_speed);
-    // delay(50);
-
-    while (!limitSwitch.is_pressed(SWRIGHT)) {
-        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
-        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
-    }
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-    float right_boundary = (get_current_pos()[0]);
-    set_right_boundary(right_boundary);
-
-    // Back off
-    MoveTime(2000, Target::Left, retreat_speed);
-    // delay(50);
-
-    // --- TOP (Y max) ---
-    allowed_switch = Target::Up;
-
-    while (!limitSwitch.is_pressed(SWTOP)) {
-        motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
-        motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
-    }
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-
-    // Back off
-    MoveTime(retreat_time, Target::Down, retreat_speed);
-    // delay(50);
-
-    while (!limitSwitch.is_pressed(SWTOP)) {
-        motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
-        motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
-    }
-    motor_A->stop_motor(MotorID::M1);
-    motor_B->stop_motor(MotorID::M2);
-    float top_boundary = (get_current_pos()[1]);
-    set_top_boundary(top_boundary);
-
-    // Back off
-    MoveTime(2000, Target::Down, retreat_speed);
-    // delay(50);
-
-    allowed_switch = Target::None;
-    allowed_switch2 = Target::None;
-
-    // --- Return to bottom-left (home) ---
-    // move_to_target(0, 0, nominal_speed);
-
-    Serial.println("=== HOMING COMPLETE ===");
-
-
-    // while (!limitSwitch.is_pressed(SWLEFT))
-    // {
-    //     Serial.print("X ");
-    //   Serial.print(get_current_pos()[0]);
-    //   Serial.print(" Y ");
-    //   Serial.println(get_current_pos()[1]);      
-    //   motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
-    // motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
-    // }
-    
-    // set_left_boundary(0);
-    // motor_A->stop_motor(MotorID::M1);
-    // motor_B->stop_motor(MotorID::M2);
-
-    // while (!limitSwitch.is_pressed(SWBOTTOM))
-    // {
-    //   Serial.print("X ");
-    //   Serial.print(get_current_pos()[0]);
-    //   Serial.print(" Y ");
-    //   Serial.println(get_current_pos()[1]); 
-    //     motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
-    //     motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW); 
-    // }
-    // set_bottom_boundary(0);
-    // motor_A->stop_motor(MotorID::M1);
-    // motor_B->stop_motor(MotorID::M2);
-
-    // motor_A->ResetEncoder();
-    // motor_B->ResetEncoder();
-
-    // while (!limitSwitch.is_pressed(SWRIGHT))
-    // {
-    //     Serial.print("X ");
-    //   Serial.print(get_current_pos()[0]);
-    //   Serial.print(" Y ");
-    //   Serial.println(get_current_pos()[1]); 
-    //     motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
-    //     motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW); 
-    // }
-
-    // set_right_boundary(get_current_pos()[0]);
-    // motor_A->stop_motor(MotorID::M1);
-    // motor_B->stop_motor(MotorID::M2);
-
-    // while (!limitSwitch.is_pressed(SWTOP))
-    // {
-    //     Serial.print("X ");
-    //   Serial.print(get_current_pos()[0]);
-    //   Serial.print(" Y ");
-    //   Serial.println(get_current_pos()[1]); 
-    //     motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
-    //     motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW); 
-    // }
-
-    // set_top_boundary(get_current_pos()[1]);
-    // motor_A->stop_motor(MotorID::M1);
-    // motor_B->stop_motor(MotorID::M2);
-    
+    this->homing_step = HomingStep::MOVE_LEFT;
 }
+
+void Plotter::homing_tick() {
+    bool done = false;
+    switch (this->homing_step) {
+        case HomingStep::MOVE_LEFT:
+            allowed_switch = Target::Left;
+            allowed_switch2 = Target::None;
+            if(limitSwitch.is_pressed(SWLEFT)) {
+              this->homing_step = HomingStep::RETREAT_RIGHT_1;
+              break;  
+            }
+            motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
+            motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+            
+        case HomingStep::RETREAT_RIGHT_1:
+            done = MoveTime(retreat_time, Target::Right, retreat_speed);
+            if (done) {
+              this->homing_step = HomingStep::MOVE_DOWN;
+              done = false;
+            }
+
+        case HomingStep::MOVE_DOWN:
+            allowed_switch = Target::Down;
+            allowed_switch2 = Target::None; 
+            if(limitSwitch.is_pressed(SWBOTTOM)) {
+              this->homing_step = HomingStep::RETREAT_UP_1;
+              break;  
+            }
+            motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CW); 
+            motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
+
+        case HomingStep::RETREAT_UP_1:
+            done = MoveTime(retreat_time, Target::Right, retreat_speed);
+            if (done) {
+              this->homing_step = HomingStep::APPROACH_BOTTOM;
+              done = false;
+            }
+        case HomingStep::APPROACH_BOTTOM:
+            allowed_switch = Target::Down;
+            allowed_switch2 = Target::None; 
+            if(limitSwitch.is_pressed(SWBOTTOM)) {
+              this->homing_step = HomingStep::APPROACH_LEFT;
+              break;  
+            }
+            Serial.println("Homing Step:APPROACH_BOTTOM");
+            motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
+            motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
+        case HomingStep::APPROACH_LEFT:
+            allowed_switch = Target::Left;
+            allowed_switch2 = Target::Bottom; 
+            if(limitSwitch.is_pressed(SWLEFT)) {
+              this->homing_step = HomingStep::MOVE_OUT_LITTLE_RIGHT;
+              break;  
+            }
+            Serial.println("Homing Step:APPROACH_BOTTOM");
+            motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
+            motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
+        case HomingStep::MOVE_OUT_LITTLE_RIGHT:
+            done = MoveTime(retreat_time, Target::Right, retreat_speed);
+            if (done) {
+              this->homing_step = HomingStep::MOVE_OUT_LITTLE_UP;
+              done = false;
+            }
+        case HomingStep::MOVE_OUT_LITTLE_UP:
+            done = MoveTime(retreat_time, Target::Up, retreat_speed);
+            if (done) {
+              this->homing_step = HomingStep::RESET_ORIGIN;
+              done = false;
+            }
+        case HomingStep::RESET_ORIGIN:
+            motor_A->ResetEncoder();
+            motor_B->ResetEncoder();
+            set_left_boundary(0);
+            set_bottom_boundary(0);
+            this->homing_step = HomingStep::RETREAT_UP_2;
+        case HomingStep::RETREAT_UP_2:
+            done = MoveTime(retreat_time, Target::Up, retreat_speed);
+            if (done) {
+              this->homing_step = HomingStep::MOVE_RIGHT;
+              done = false;
+            }
+        case HomingStep::MOVE_RIGHT:
+            allowed_switch = Target::Right;
+            allowed_switch2 = Target::None; 
+            if(limitSwitch.is_pressed(SWRIGHT)) {
+              this->homing_step = HomingStep::RETREAT_LEFT_1;
+              break;  
+            }
+            Serial.println("Homing Step: MOVE_DOWN");
+            motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
+            motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
+        case HomingStep::RETREAT_LEFT_1:
+            done = MoveTime(retreat_time, Target::Left, retreat_speed);
+            if (done) {
+              this->homing_step = HomingStep::APPROACH_RIGHT;
+              done = false;
+            }
+        case HomingStep::APPROACH_RIGHT:
+            allowed_switch = Target::Right;
+            allowed_switch2 = Target::None; 
+            if(limitSwitch.is_pressed(SWRIGHT)) {
+              set_right_boundary(get_current_position()[0]);
+              this->homing_step = HomingStep::RETREAT_LEFT_2;
+              break;  
+            }
+            motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
+            motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
+        case HomingStep::RETREAT_LEFT_2:
+            done = MoveTime(retreat_time, Target::Left, retreat_speed);
+            if (done) {
+              this->homing_step = HomingStep::MOVE_UP;
+              done = false;
+            }
+        case HomingStep::MOVE_UP:
+            allowed_switch = Target::Up;
+            allowed_switch2 = Target::None; 
+            if(limitSwitch.is_pressed(SWTOP)) {
+              this->homing_step = HomingStep::RETREAT_DOWN;
+              break;  
+            }
+            motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
+            motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+        case HomingStep::RETREAT_DOWN:
+            done = MoveTime(retreat_time, Target::Down, retreat_speed);
+            if (done) {
+              this->homing_step = HomingStep::APPROACH_TOP;
+              done = false;
+            }
+        case HomingStep::APPROACH_TOP:
+            allowed_switch = Target::Up;
+            allowed_switch2 = Target::None; 
+            if(limitSwitch.is_pressed(SWTOP)) {
+              set_top_boundary(get_current_position()[1]);
+              this->homing_step = HomingStep::DONE;
+              break;  
+            }
+            motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
+            motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
+
+        case HomingStep::DONE:
+            Serial.println("=== HOMING COMPLETE ===");
+            break;
+
+        case HomingStep::NONE:
+            default:
+            break;
+    }
+}
+
+bool Plotter::is_homing_done() {
+    return this->homing_step == HomingStep::DONE;
+}
+
+
 
 float Plotter::get_left_boundary() {
     return left_boundary;

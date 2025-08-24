@@ -8,13 +8,14 @@
 #include "limit_switch.hpp"
 #include "gcodeParser.hpp"
 
+// Define the pins for the motors and limit switches
 #define MOT1_PWM_PIN PB1
 #define MOT2_PWM_PIN PB2
 
-// #define MOT1_ENCA_PIN PD0
-// #define MOT1_ENCB_PIN PD1
-// #define MOT2_ENCA_PIN PD2
-// #define MOT2_ENCB_PIN PD3
+#define MOT1_ENCA_PIN PD0
+#define MOT1_ENCB_PIN PD1
+#define MOT2_ENCA_PIN PD2
+#define MOT2_ENCB_PIN PD3
 
 #define SWTOP PD2
 #define SWBOTTOM PD3
@@ -22,21 +23,23 @@
 #define SWLEFT PE5
 
 
-volatile unsigned long sys_ticks = 0;  // should increment every 1ms
+volatile unsigned long sys_ticks = 0;   // should increment every 1ms
 
+// The core states of our state machine
 enum class State {
-      IDLE,
-      MOVING,
-      HOMING,
-      FAULT
-  };
+    IDLE,       // Waiting for a new command
+    MOVING,     // Executing a G1 move command
+    HOMING,     // Executing the G28 homing sequence
+    FAULT       // An error has occurred, all operations halted
+};
 
+// Function prototypes
 void new_state(State);
-void doHoming();
 void doMoving(float x, float y);
+void doHoming();
 void doFault();
 
-
+// Global variables for the state machine and hardware
 State global_state = State::IDLE;
 GCodeParser parser;
 GCodeCommand cmd;
@@ -45,89 +48,88 @@ Motor* motor1;
 Motor* motor2;
 Plotter* plotter;
 
+
 int main() {
     Serial.begin(9600);
     cli();
+    
     motor1 = new Motor(MotorID::M1);
     motor2 = new Motor(MotorID::M2);
     plotter = new Plotter(motor1, motor2);
     // timer1_init();
     sei();
 
-
     while (1) {
-      cmd = parser.check_user_input();  // will return NONE if no new input
+        cmd = parser.check_user_input(); 
 
-      switch(global_state) {
-        case State::IDLE:
-          if(cmd.type == CommandType::G1) {
-            new_state(State::MOVING); // THIS ASSUMES THAT plotter.moving() is non blocking.
-            doMoving(cmd.x, cmd.y);
-          }
-          else if(cmd.type == CommandType::G28) {
-            new_state(State::HOMING);
-            doHoming();
-          }
-          else if(cmd.type == CommandType::M999) {
-            new_state(State::FAULT);
-            doFault();
-          }
-          break;
-        case State::MOVING:
-          // Check if movement is done.
-          if (plotter->is_moving_done()) {
-            new_state(State::IDLE);
-          }
-          break;
-          
-        case State::HOMING:
-          // Serial.println("state homing now");
-          // need to get a signal that says 'homing done' when its done homing.
-          break;
+        switch(global_state) {
+            case State::IDLE:
+                if(cmd.type == CommandType::G1) {
+                    new_state(State::MOVING);
+                    doMoving(cmd.x, cmd.y);
+                }
+                else if(cmd.type == CommandType::G28) {
+                    new_state(State::HOMING);
+                    doHoming();
+                }
+                else if(cmd.type == CommandType::M999) {
+                    new_state(State::FAULT);
+                    doFault();
+                }
+                break;
+            
+            case State::MOVING:
+                // In MOVING state, just check if the movement is complete
+                if (plotter->is_moving_done()) {
+                    new_state(State::IDLE);
+                }
+                break;
+                
+            case State::HOMING:
+                plotter->homing_tick();
+                if (plotter->is_homing_done()) {
+                    new_state(State::IDLE);
+                }
+                break;
 
-        case State::FAULT:
-          // Serial.println("state fault now");
-          motor1->stop_motor(MotorID::M1);
-          motor2->stop_motor(MotorID::M2);
-          // IT NEEDS TO RESET IN FAULT STATE.....
-          break;
-      }
+            case State::FAULT:
+                // In FAULT state, motors are disabled and we wait for a reset
+                // For now, we just remain in this state. A reset command (M999) could be used to clear it.
+                break;
+        }
     }
-    delay(100);
-  }
+}
 
 
 void new_state(State s) {
-  global_state = s;
-  Serial.print("Switching state to ");
-  Serial.println(static_cast<int>(s)); // Prints the integer value of the enum
+    global_state = s;
+    Serial.print("Switching state to ");
+    Serial.println(static_cast<int>(s)); // Prints the integer value of the enum
 }
 
-void doIdle(Plotter& plotter) {
-
-}
 
 void doMoving(float x, float y) {
-  Serial.print("X = ");
-  Serial.print(x);
-  Serial.print(" Y = ");
-  Serial.println(y);
-
-  plotter->move_to_target(x, y, 100);
-
-  //ONLY WHEN OPERATION IS COMPLTED DO WE CHANGE STATE BACK TO IDLE. 
-    new_state(State::IDLE);
+    Serial.print("Starting movement to X=");
+    Serial.print(x);
+    Serial.print(" Y=");
+    Serial.println(y);
+    plotter->move_to_target(x, y, 100);
 }
 
+
 void doHoming() {
-  plotter->home(); //this assumes home() is NON-BLOCKING! it is atm...
-  new_state(State::IDLE);
+    Serial.println("Homing initiated.");
+    plotter->start_homing();
 }
 
 
 void doFault() {
-    //print an error message and stop everything.
-  }
+    Serial.println("!!! FAULT DETECTED. HALTING ALL OPERATIONS. !!!");
+    motor1->stop_motor(MotorID::M1);
+    motor2->stop_motor(MotorID::M2);
+}
+
+
 
 
 
@@ -141,7 +143,7 @@ ISR(INT2_vect){
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
-      new_state(State::IDLE); 
+      new_state(State::ERROR); 
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Up) && (plotter->GetAllowedSwitch2() != Target::Up)){
         motor1->DisableMotor();

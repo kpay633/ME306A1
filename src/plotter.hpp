@@ -1,9 +1,33 @@
-// LATEST WORKING VERSION
+#ifndef PLOTTER_HPP
+#define PLOTTER_HPP
 
-#ifndef PLOTTER_H
-#define PLOTTER_H
+#include "motor.hpp"
+#include "limit_switch.hpp"
+#include "arduino.h"
 
-class Motor;
+// Define the homing steps as an enum for the non-blocking state machine
+enum class HomingStep {
+    NONE,                   // Homing not active
+    MOVE_LEFT,
+    RETREAT_RIGHT_1,
+    MOVE_DOWN,
+    RETREAT_UP_1,
+    APPROACH_BOTTOM,
+    APPROACH_LEFT, //
+    MOVE_OUT_LITTLE_RIGHT,
+    MOVE_OUT_LITTLE_UP,
+    RESET_ORIGIN, //SET LEFT AND BOTTOM BOUNDARIES
+    RETREAT_UP_2,
+    MOVE_RIGHT,
+    RETREAT_LEFT_1,
+    APPROACH_RIGHT, //SET RIGHT BOUNDARY
+    RETREAT_LEFT_2,
+    MOVE_UP,
+    RETREAT_DOWN,
+    APPROACH_TOP, //SET TOP BOUNDARY
+    DONE                    // Homing process is complete
+};
+
 
 enum class Target{
     Left,
@@ -39,6 +63,9 @@ class Plotter {
         void IncrementTime();
         Target GetAllowedSwitch1();
         Target GetAllowedSwitch2();
+        void start_homing();
+        void homing_tick();
+        bool is_homing_done();
 
     private:
         float current_pos[2];
@@ -50,6 +77,10 @@ class Plotter {
         int time;
         Target allowed_switch = Target::None;
         Target allowed_switch2 = Target::None;
+        HomingStep homing_step = HomingStep::NONE;
+        bool is_moving = false;
+
 };
+
 
 #endif // PLOTTER_H
