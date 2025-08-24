@@ -84,13 +84,25 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
     //TODO: convert to motor L and R outputs or atleast figure out how
     this->motor_left_control_effort = control_output_x + control_output_y;
     this->motor_right_control_effort = control_output_x - control_output_y;
- 
-    // //Print the control efforts to the console fr debugging purposes
-    // Serial.print("Left motor control effort: ");
-    // Serial.println(motor_left_control_effort);
-    // Serial.print("Right motor control effort: ");
-    // Serial.println(motor_right_control_effort);
- 
+
+
+    Serial.print(">Proportional Control Effort Contribution:");
+    Serial.println(P_output_x);
+    Serial.print(">Integral Control Effort Contribution");
+    Serial.println(I_output_x);
+    Serial.print(">Derivative Control Effor Contribution:");
+    Serial.println(D_output_x);
+    
+    Serial.print(">Total Control Effort X:");
+    Serial.println(control_output_x);
+    Serial.print(">Total Control Effort Y:");
+    Serial.println(control_output_y);
+    
+    Serial.print(">Control Effort to Left Motor:");
+    Serial.println(motor_left_control_effort);
+    Serial.print(">Control Effort to Right Motor:");
+    Serial.println(motor_right_control_effort);
+
 }
  
 float Controller::getMotorLeftControlEffort() const{

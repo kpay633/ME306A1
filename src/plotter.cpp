@@ -136,7 +136,7 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
         Serial.println("ERROR - OUTSIDE BOUNDS");
         return;
     }
-    Controller ctrl(4.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    Controller ctrl(2.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
     // int kp_x = 4;
     // int kp_y = 4;
@@ -147,7 +147,7 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
 
     const float POSITION_TOLERANCE = 1;
     int iteration = 0;
-    const int MAX_ITERATIONS = 100; // Prevent infinite loop
+    const int MAX_ITERATIONS = 50; // Prevent infinite loop
 
     while (iteration < MAX_ITERATIONS) {
         iteration++;
@@ -156,6 +156,23 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
         float* current = get_current_pos();
         float delta_x = x_target - current[0];
         float delta_y = y_target - current[1];
+
+        // Teleplot: target vs current positions
+       // CORRECTED Teleplot format
+        Serial.print(">Target X Position:");
+        Serial.println(x_target);
+        Serial.print(">Target Y Position:");
+        Serial.println(y_target);
+        
+        Serial.print(">Current X Position:");
+        Serial.println(current[0]);
+        Serial.print(">Current Y Position:");
+        Serial.println(current[1]);
+        
+        Serial.print(">Error in X position:");
+        Serial.println(delta_x);
+        Serial.print(">Error in Y position:");
+        Serial.println(delta_y);
 
         Serial.print("Iter "); Serial.print(iteration);
         Serial.print(" | Current: ("); Serial.print(current[0], 4);
@@ -180,7 +197,6 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
         
         motorA_move = ctrl.getMotorLeftControlEffort();
         motorB_move = ctrl.getMotorRightControlEffort();
-        // Convert X/Y error to motor movements
 
         // Move motors (proportional control would be better here)
         Direction dir_A = (motorA_move >= 0) ? Direction::CCW : Direction::CW;
