@@ -22,14 +22,7 @@
 #define SWLEFT PE5
 
 
-// void new_state(State);
-// void doIdle(Plotter&);
-// void doHoming(Plotter&);
-// void doMoving(Plotter&);
-// void doFault(Plotter&);
-
 volatile unsigned long sys_ticks = 0;  // should increment every 1ms
-
 
 enum class State {
       IDLE,
@@ -54,65 +47,47 @@ Plotter* plotter;
 
 int main() {
     Serial.begin(9600);
-
-    // while (!Serial) { } // wait for USB serial connection
-    // delay(100); 
-
     cli();
-
-    motor1 = new Motor(MotorID::M1);  // voltage=0, timer=1, pwm_pin=PB1, enc_a=PD2, enc_b=PD3
-    motor2 = new Motor(MotorID::M2);  // another motor on Timer2 with different encoder pins
+    motor1 = new Motor(MotorID::M1);
+    motor2 = new Motor(MotorID::M2);
     plotter = new Plotter(motor1, motor2);
-
     // timer1_init();
-
-
     sei();
-
-    //init(); // needed when bypassing Arduino's default main
-
-
-
 
     while (1) {
       cmd = parser.check_user_input();  // will return NONE if no new input
 
-
       switch(global_state) {
         case State::IDLE:
+
           if(cmd.type == CommandType::G1) {
             new_state(State::MOVING); 
             doMoving(cmd.x, cmd.y);
           }
           else if(cmd.type == CommandType::G28) {
             new_state(State::HOMING);
+            doHoming();
           }
           else if(cmd.type == CommandType::M999) {
-            Serial.println("Switching state to FAULT.");
-
+            new_state(State::FAULT);
+            doFault();
           }
-          // doIdle(plotter);
           break;
-
-
-
         case State::MOVING:
-        Serial.print("X = ");
-        Serial.print(cmd.x);
-        Serial.print(" Y = ");
-        Serial.println(cmd.y);
-          doMoving(cmd.x, cmd.y);
-          Serial.println("now its going to pass in x and y int moving motor");
+          // Serial.println("in state moving.");
+          // need to get a signal that says 'moving done'
           break;
           
         case State::HOMING:
-          doHoming();
-          Serial.println("yay homing");
-
+          // Serial.println("state homing now");
+          // need to get a signal that says 'homing done' when its done homing.
           break;
 
         case State::FAULT:
-          doFault();
+          // Serial.println("state fault now");
+          motor1->stop_motor(MotorID::M1);
+          motor2->stop_motor(MotorID::M2);
+          // IT NEEDS TO RESET IN FAULT STATE.....
           break;
       }
     }
@@ -128,42 +103,32 @@ void new_state(State s) {
 
 void doIdle(Plotter& plotter) {
 
-  }
+}
 
 void doMoving(float x, float y) {
-    plotter->move_to_target(10, 110, 100);
-    plotter->move_to_target(60, 110,100);
-    plotter->move_to_target(60, 50, 100);
-    plotter->move_to_target(10, 50,100);
-    plotter->move_to_target(10, 110, 100);
-    plotter->move_to_target(60, 50,100);
-    plotter->move_to_target(60, 110,100);
-    plotter->move_to_target(10, 50,100);
-    
+  Serial.print("X = ");
+  Serial.print(x);
+  Serial.print(" Y = ");
+  Serial.println(y);
 
-    // plotter->move_to_target(x, y, 100);
-      new_state(State::IDLE);
-    }
+  plotter->move_to_target(x, y, 100);
+
+  //ONLY WHEN OPERATION IS COMPLTED DO WE CHANGE STATE BACK TO IDLE. 
+    new_state(State::IDLE);
+}
 
 void doHoming() {
-      plotter->home();
-      // plotter->move_to_target(0, 0, 100);
-      // plotter->move_to_target(plotter->get_right_boundary(), plotter->get_top_boundary(), 100);
- 
-      // plotter->move_to_target(100, 50, 100);
+  plotter->home();
+  new_state(State::IDLE);
+}
 
-
-    // plotter->MoveTime(2000, Target::Left, 180);
-    // plotter->MoveTime(2000, Target::Up, 180);
-    // plotter->MoveTime(2000, Target::Right, 180);
-    // plotter->MoveTime(2000, Target::Down, 180);
-
-      new_state(State::IDLE);
-  }
 
 void doFault() {
     //print an error message and stop everything.
   }
+
+
+
 
 
 ISR(INT2_vect){
@@ -242,30 +207,29 @@ ISR(TIMER2_OVF_vect) {
     plotter->IncrementTime();
 }
 
-
 ISR(TIMER1_COMPA_vect) {
       sys_ticks++;  // 1ms has passed
   }
 
-  void timer1_init() {
-      cli(); // disable interrupts while configuring
+void timer1_init() {
+  cli(); // disable interrupts while configuring
 
-      TCCR1A = 0;  // normal mode
-      TCCR1B = 0;
+  TCCR1A = 0;  // normal mode
+  TCCR1B = 0;
 
-      // CTC mode (Clear Timer on Compare)
-      TCCR1B |= (1 << WGM12);
+  // CTC mode (Clear Timer on Compare)
+  TCCR1B |= (1 << WGM12);
 
-      // Compare match every 1ms
-      OCR1A = 249;  
-      // formula: OCR1A = (F_CPU / (prescaler * 1000)) - 1
-      // with F_CPU=16MHz, prescaler=64 → OCR1A=249
+  // Compare match every 1ms
+  OCR1A = 249;  
+  // formula: OCR1A = (F_CPU / (prescaler * 1000)) - 1
+  // with F_CPU=16MHz, prescaler=64 → OCR1A=249
 
-      // Enable interrupt on compare A
-      TIMSK1 |= (1 << OCIE1A);
+  // Enable interrupt on compare A
+  TIMSK1 |= (1 << OCIE1A);
 
-      // Start timer with prescaler = 64
-      TCCR1B |= (1 << CS11) | (1 << CS10);
+  // Start timer with prescaler = 64
+  TCCR1B |= (1 << CS11) | (1 << CS10);
 
-      sei(); // enable global interrupts
-  }
+  sei(); // enable global interrupts
+}

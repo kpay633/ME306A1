@@ -3,6 +3,7 @@
 #include "plotter.h"
 #include "limit_switch.hpp"
 #include "motor.hpp"
+#include "controller.hpp"
 
 #define MOT1_PWM_PIN PB1
 #define MOT2_PWM_PIN PB2
@@ -127,7 +128,7 @@ void Plotter::MoveTime(int move_time, Target target, int speed){
 }
 
 void Plotter::move_to_target(float x_target, float y_target, float speed) {
-    Serial.println("=== Simple move_to_target ===");
+    Serial.println("=== Simple move_to_target with Controller class ===");
     Serial.print("Motors disabled = ");
     Serial.println(motor_A->IsDisabled());
 
@@ -135,11 +136,10 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
         Serial.println("ERROR - OUTSIDE BOUNDS");
         return;
     }
+    Controller ctrl(4.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
-    int kp_x = 4;
-    int kp_y = 4;
-    float control_effort_X;
-    float control_effort_Y;
+    // int kp_x = 4;
+    // int kp_y = 4;
     float motorA_move;
     float motorB_move;
     float max_abs;
@@ -174,13 +174,13 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
             break;
         }
 
-        control_effort_X = delta_x * kp_x;
-        control_effort_Y = delta_y * kp_y;
-
-        motorA_move = control_effort_X + control_effort_Y;
-        motorB_move = control_effort_X - control_effort_Y;
+        // control_effort_X = delta_x * kp_x;
+        // control_effort_Y = delta_y * kp_y;
+        ctrl.calculateControlEffort(delta_x, delta_y, 0.0, 0.0, controlMode::P);
+        
+        motorA_move = ctrl.getMotorLeftControlEffort();
+        motorB_move = ctrl.getMotorRightControlEffort();
         // Convert X/Y error to motor movements
-
 
         // Move motors (proportional control would be better here)
         Direction dir_A = (motorA_move >= 0) ? Direction::CCW : Direction::CW;
@@ -196,25 +196,12 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
             motorB_move = motorB_move * scale;
         }
 
-        // if (motorA_move > 220){
-        //     motorA_move = 220;
-        // }
-
-        // if (motorB_move > 220){
-        //     motorB_move = 220;
-        // }
-
         Serial.print("Motor moves - A: "); Serial.print(motorA_move, 4);
         Serial.print(", B: "); Serial.println(motorB_move, 4);
 
         motor_A->move_motor(MotorID::M1, (motorA_move + 140), dir_A);
         motor_B->move_motor(MotorID::M2, (motorB_move + 140), dir_B);
 
-
-        
-        // // Stop motors after each iteration to see if position changed
-        // motor_A->stop_motor(MotorID::M1);
-        // motor_B->stop_motor(MotorID::M2);
         }
     
     if (iteration >= MAX_ITERATIONS) {
