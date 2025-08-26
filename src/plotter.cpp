@@ -315,7 +315,9 @@ void Plotter::homing_tick() {
             break;
 
         case HomingStep::RETREAT_UP_1:
-            done = MoveTime(retreat_time, Target::Right, retreat_speed);
+            if (!is_move_time_done()) {
+              MoveTime(retreat_time, Target::Right, retreat_speed);
+            }
             if (done) {
               this->homing_step = HomingStep::APPROACH_BOTTOM;
               done = false;
