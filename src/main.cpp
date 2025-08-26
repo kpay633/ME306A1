@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 #include "motor.hpp"
-#include "plotter.h"
+#include "plotter.hpp"
 #include "limit_switch.hpp"
 #include "gcodeParser.hpp"
 
@@ -17,10 +17,6 @@
 #define MOT2_ENCA_PIN PD2
 #define MOT2_ENCB_PIN PD3
 
-#define SWTOP PD2
-#define SWBOTTOM PD3
-#define SWRIGHT PE4
-#define SWLEFT PE5
 
 
 volatile unsigned long sys_ticks = 0;   // should increment every 1ms
@@ -80,9 +76,9 @@ int main() {
             
             case State::MOVING:
                 // In MOVING state, just check if the movement is complete
-                if (plotter->is_moving_done()) {
-                    new_state(State::IDLE);
-                }
+                // if (plotter->is_moving_done()) {
+                //     new_state(State::IDLE);
+                // }
                 break;
                 
             case State::HOMING:
@@ -143,7 +139,7 @@ ISR(INT2_vect){
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
-      new_state(State::ERROR); 
+      new_state(State::FAULT); 
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Up) && (plotter->GetAllowedSwitch2() != Target::Up)){
         motor1->DisableMotor();

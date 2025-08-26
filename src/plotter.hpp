@@ -66,6 +66,7 @@ class Plotter {
         void start_homing();
         void homing_tick();
         bool is_homing_done();
+        bool is_move_time_done();
 
     private:
         float current_pos[2];
@@ -79,6 +80,7 @@ class Plotter {
         Target allowed_switch2 = Target::None;
         HomingStep homing_step = HomingStep::NONE;
         bool is_moving = false;
+        u32 move_time_start = 0;
 
 };
 
