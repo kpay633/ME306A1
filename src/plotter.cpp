@@ -136,8 +136,8 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
         Serial.println("ERROR - OUTSIDE BOUNDS");
         return;
     }
-    Controller ctrl(2.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-
+    Controller ctrl(2.0, 0.5, 0.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0.0);
+    ctrl.setSaturationLimits(-115.0, 115.0);
     // int kp_x = 4;
     // int kp_y = 4;
     float motorA_move;
@@ -147,7 +147,7 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
 
     const float POSITION_TOLERANCE = 1;
     int iteration = 0;
-    const int MAX_ITERATIONS = 50; // Prevent infinite loop
+    const int MAX_ITERATIONS = 100; // Prevent infinite loop
 
     while (iteration < MAX_ITERATIONS) {
         iteration++;
@@ -193,7 +193,7 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
 
         // control_effort_X = delta_x * kp_x;
         // control_effort_Y = delta_y * kp_y;
-        ctrl.calculateControlEffort(delta_x, delta_y, 0.0, 0.0, controlMode::P);
+        ctrl.calculateControlEffort(delta_x, delta_y, 0.0, 0.0, controlMode::P_I);
         
         motorA_move = ctrl.getMotorLeftControlEffort();
         motorB_move = ctrl.getMotorRightControlEffort();

@@ -17,6 +17,9 @@ Controller::Controller(float kp_x, float ki_x, float kd_x, float kp_y, float ki_
     this->Kv_x = kv_x;
     this->Kv_y = kv_y;
     this->dt = timestep;
+
+    this->output_min = -115.0;  // -(255 - 140) = -115
+    this->output_max = 115.0;   // (255 - 140) = 115
 }
  
 // Calculate control effort PID
@@ -38,7 +41,7 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
     float P_output_x = this->Kp_x * current_error_x;
     float P_output_y = this->Kp_y * current_error_y;
  
-    //integral calculation for I term
+    //integral calculation for I term (NOTE THIS WILL BE CONDITIONALLY UPDATED)
     integral_error_x += current_error_x * dt;
     integral_error_y += current_error_y * dt;
  
@@ -80,8 +83,42 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
             control_output_y += P_output_y + I_output_y + D_output_y;
             break;
     }
+
+    //String unsaturated control ouptus for anti-windup logic
+    float unsaturated_control_output_x = control_output_x;
+    float unsaturated_control_output_y = control_output_y;
+
+    control_output_x = constrain(control_output_x, output_min, output_max);
+    control_output_y = constrain(control_output_y, output_min, output_max);
+
+    bool update_integral_x = true;
+    bool update_integral_y = true;
+
+    if (mode == controlMode::P_I || mode == controlMode::PID) {
+        //check for x axis saturation
+        if (unsaturated_control_output_x > output_max && current_error_x > 0) {
+            update_integral_x = false; // Don't wind up further in positive direction
+        } else if (unsaturated_control_output_x < output_min && current_error_x < 0) {
+            update_integral_x = false; // Don't wind up further in negative direction
+        }
+        
+        //checking if y axis is saturated  
+        if (unsaturated_control_output_y > output_max && current_error_y > 0) {
+            update_integral_y = false;
+        } else if (unsaturated_control_output_y < output_min && current_error_y < 0) {
+            update_integral_y = false;
+        }
+        
+        //update integrals only if allowed
+        if (update_integral_x) {
+            integral_error_x += current_error_x * dt;
+        }
+        if (update_integral_y) {
+            integral_error_y += current_error_y * dt;
+        }
+    }
  
-    //TODO: convert to motor L and R outputs or atleast figure out how
+    //convert to motor L and R outputs or atleast figure out how
     this->motor_left_control_effort = control_output_x + control_output_y;
     this->motor_right_control_effort = control_output_x - control_output_y;
 
@@ -122,6 +159,11 @@ void Controller::setGains(float kp_x, float ki_x, float kd_x,float kp_y, float k
     this->Ki_y = ki_y;
     this->Kd_x = kd_x;
     this->Kd_y = kd_y;    
+}
+
+void Controller::setSaturationLimits(float min_output, float max_output) {
+    this->output_min = min_output;
+    this->output_max = max_output;
 }
  
 // Reset internal state (the attributrs)

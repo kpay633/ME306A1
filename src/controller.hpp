@@ -33,6 +33,9 @@ private:
     float motor_left_control_effort;
     float motor_right_control_effort;
 
+    float output_min;
+    float output_max;
+
     unsigned long last_time = 0;
  
 public:
@@ -43,6 +46,7 @@ public:
     void reset();
     float getMotorLeftControlEffort() const;
     float getMotorRightControlEffort() const;
+    void setSaturationLimits(float min_output, float max_output);
  
 };
  
