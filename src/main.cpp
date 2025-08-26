@@ -67,6 +67,7 @@ int main() {
           else if(cmd.type == CommandType::G28) {
             new_state(State::HOMING);
             doHoming();
+            
           }
           else if(cmd.type == CommandType::M999) {
             new_state(State::FAULT);

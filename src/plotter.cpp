@@ -136,7 +136,8 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
         Serial.println("ERROR - OUTSIDE BOUNDS");
         return;
     }
-    Controller ctrl(2.0, 0.5, 0.0, 2.0, 0.5, 0.0, 0.0, 0.0, 0.0);
+    //0.75 kp,0.6ki is best
+    Controller ctrl(0.75, 0.65, 0.0, 0.75, 0.65, 0.0, 0.0, 0.0, 0.0);
     ctrl.setSaturationLimits(-115.0, 115.0);
     // int kp_x = 4;
     // int kp_y = 4;
