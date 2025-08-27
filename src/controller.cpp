@@ -18,8 +18,8 @@ Controller::Controller(float kp_x, float ki_x, float kd_x, float kp_y, float ki_
     this->Kv_y = kv_y;
     this->dt = timestep;
 
-    this->output_min = -115.0;  // -(255 - 140) = -115
-    this->output_max = 115.0;   // (255 - 140) = 115
+    this->output_min = -105.0;  // -(255 - 150) = -105
+    this->output_max = 105.0;   // (255 - 150) = 105
 }
  
 // Calculate control effort PID

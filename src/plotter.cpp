@@ -132,13 +132,16 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
     Serial.print("Motors disabled = ");
     Serial.println(motor_A->IsDisabled());
 
+    x_target = current_pos[0] + x_target;
+    y_target = current_pos[1] + y_target;
+
     if ((x_target > get_right_boundary()) || (x_target < 0) || (y_target > get_top_boundary()) || (y_target < 0)){
         Serial.println("ERROR - OUTSIDE BOUNDS");
         return;
     }
     //0.75 kp,0.6ki is best
     Controller ctrl(0.75, 0.65, 0.0, 0.75, 0.65, 0.0, 0.0, 0.0, 0.0);
-    ctrl.setSaturationLimits(-115.0, 115.0);
+    ctrl.setSaturationLimits(-105.0, 105.0);
     // int kp_x = 4;
     // int kp_y = 4;
     float motorA_move;
@@ -148,18 +151,56 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
 
     const float POSITION_TOLERANCE = 1;
     int iteration = 0;
-    const int MAX_ITERATIONS = 100; // Prevent infinite loop
+    const int MAX_ITERATIONS = 75; // Prevent infinite loop
 
-    while (iteration < MAX_ITERATIONS) {
+    //parmaeters to ramp up velcocity
+    float initial_distance = 0.0;
+    float total_distance = 0.0;
+    bool ramp_up_phase = true;
+    const float RAMP_UP_FRACTION = 0.3; //this will make us ramp for first 30% of the way
+    const float MAX_VELOCITY_SCALE = 1.0; //the full cotnrol effort
+    const float MIN_VELOCITY_SCALE = 0.2; //starting control effort
+
+    //gettign the inital distance to the final target
+    float* current = get_current_pos();
+    float initial_delta_x = x_target - current[0];
+    float initial_delta_y = y_target - current[1];
+    initial_distance = sqrt(initial_delta_x * initial_delta_x + initial_delta_y * initial_delta_y);
+    total_distance = initial_distance;
+
+    bool position_reached = false;
+
+    while (!position_reached && (iteration < MAX_ITERATIONS)) {
         iteration++;
         
         // Get current X/Y position
-        float* current = get_current_pos();
+        current = get_current_pos();
         float delta_x = x_target - current[0];
         float delta_y = y_target - current[1];
+        float current_distance = sqrt(delta_x * delta_x + delta_y * delta_y);
+
+        //how far we travel
+        float distance_traveled = total_distance - current_distance;
+        float progress = 1.0;
+        if(total_distance > 0){
+            progress = (distance_traveled / total_distance);
+        } 
+
+        float velocity_scale = MAX_VELOCITY_SCALE;
+
+        if (progress < RAMP_UP_FRACTION) {
+            //ramp up phase means linear increase from MIN to MAX
+            float ramp_progress = progress / RAMP_UP_FRACTION;
+            velocity_scale = MIN_VELOCITY_SCALE + (MAX_VELOCITY_SCALE - MIN_VELOCITY_SCALE) * ramp_progress;
+            ramp_up_phase = true;
+        } else {
+            //PI control takes over fully if we are over 30% of distance
+            velocity_scale = MAX_VELOCITY_SCALE;
+            ramp_up_phase = false;
+        }
 
         // Teleplot: target vs current positions
-       // CORRECTED Teleplot format
+        //CORRECTED Teleplot format
         Serial.print(">Target X Position:");
         Serial.println(x_target);
         Serial.print(">Target Y Position:");
@@ -175,6 +216,15 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
         Serial.print(">Error in Y position:");
         Serial.println(delta_y);
 
+        Serial.print(">Distance Remaining:");
+        Serial.println(current_distance);
+        Serial.print(">Progress:");
+        Serial.println(progress);
+        Serial.print(">Velocity Scale:");
+        Serial.println(velocity_scale);
+        Serial.print(">Ramp Phase:");
+        Serial.println(ramp_up_phase ? 1 : 0);
+
         Serial.print("Iter "); Serial.print(iteration);
         Serial.print(" | Current: ("); Serial.print(current[0], 4);
         Serial.print(", "); Serial.print(current[1], 4);
@@ -188,6 +238,7 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
 
         // Check if we're close enough
         if (abs(delta_x) < POSITION_TOLERANCE && abs(delta_y) < POSITION_TOLERANCE) {
+            position_reached = true;
             Serial.println("Position reached!");
             break;
         }
@@ -198,6 +249,10 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
         
         motorA_move = ctrl.getMotorLeftControlEffort();
         motorB_move = ctrl.getMotorRightControlEffort();
+        
+        //appplying the velocity scaling
+        motorA_move *= velocity_scale;
+        motorB_move *= velocity_scale;
 
         // Move motors (proportional control would be better here)
         Direction dir_A = (motorA_move >= 0) ? Direction::CCW : Direction::CW;
@@ -216,8 +271,8 @@ void Plotter::move_to_target(float x_target, float y_target, float speed) {
         Serial.print("Motor moves - A: "); Serial.print(motorA_move, 4);
         Serial.print(", B: "); Serial.println(motorB_move, 4);
 
-        motor_A->move_motor(MotorID::M1, (motorA_move + 140), dir_A);
-        motor_B->move_motor(MotorID::M2, (motorB_move + 140), dir_B);
+        motor_A->move_motor(MotorID::M1, (motorA_move + 145), dir_A);
+        motor_B->move_motor(MotorID::M2, (motorB_move + 145), dir_B);
 
         }
     
