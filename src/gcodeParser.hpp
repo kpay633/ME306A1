@@ -6,15 +6,17 @@
 
 enum class CommandType { 
     NONE,
-    G1,   // moving. position
+    G01,   // moving. position
     G28,  // home
-    M999
+    M999,
+    F //feedrate
 };
 
 struct GCodeCommand { 
     CommandType type;
     float x;
     float y;
+    float f;
 };
 
 class GCodeParser {
@@ -23,7 +25,7 @@ class GCodeParser {
     GCodeCommand previous_command; // stores last X/Y
     GCodeCommand parseLine(const char* line);
     char user_input[128]; // Increased buffer size for safety
-    int idx = 0;
+    u16 idx = 0;
 
 
 

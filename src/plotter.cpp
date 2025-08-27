@@ -8,7 +8,7 @@
 
 int nominal_speed = 200;
 int approach_speed = 160;
-int retreat_time = 1000;
+int retreat_time = 500;
 int retreat_speed = 200;
 bool timer_done = true;
 
@@ -153,7 +153,7 @@ bool Plotter::MoveTime(int move_time, Target target, int speed){
 
 void Plotter::move_to_target(float x_first, float y_first, float speed_first) {
     Serial.println("=== Simple move_to_target with Controller class ===");
-    //DO ONCE AT START OF MOVE
+    //DO ONCE AT START OF MOVing
     if(move_target_done){
         x_target = x_first;
         y_target = y_first;
@@ -493,9 +493,11 @@ void Plotter::homing_tick() {
               this->homing_step = HomingStep::APPROACH_RIGHT;
               break;
             }
+            Serial.println("Homing Step: RETREAT_LEFT_1");
             break;
 
         case HomingStep::APPROACH_RIGHT:
+            Serial.println("APPROACH RIGHT");
             allowed_switch = Target::Right;
             allowed_switch2 = Target::None; 
             if(limitSwitch.is_pressed(SWRIGHT)) {
@@ -508,6 +510,7 @@ void Plotter::homing_tick() {
             break;
 
         case HomingStep::RETREAT_LEFT_2:
+            Serial.println("RETREAT LEFT 2");
             if (MoveTime(retreat_time, Target::Left, retreat_speed)) {
               this->homing_step = HomingStep::MOVE_UP;
               break;
@@ -515,6 +518,7 @@ void Plotter::homing_tick() {
             break;
 
         case HomingStep::MOVE_UP:
+            Serial.println("MOVE UP");
             allowed_switch = Target::Up;
             allowed_switch2 = Target::None; 
             if(limitSwitch.is_pressed(SWTOP)) {
@@ -526,6 +530,7 @@ void Plotter::homing_tick() {
             break;
 
         case HomingStep::RETREAT_DOWN_1:
+            Serial.println("RETREAT DOWN 1");
             if (MoveTime(retreat_time, Target::Down, retreat_speed)) {
               this->homing_step = HomingStep::APPROACH_TOP;
               break;
@@ -546,8 +551,9 @@ void Plotter::homing_tick() {
             break;
 
         case HomingStep::RETREAT_DOWN_2:
+            Serial.println("homing step: RETREAT DOWN 2");
             if (MoveTime(retreat_time, Target::Down, retreat_speed)) {
-              this->homing_step = HomingStep::DONE;
+              this->homing_step = HomingStep::ORIGIN;
               allowed_switch = Target::None;
               allowed_switch2 = Target::None;
               Serial.println("=== HOMING COMPLETE ===");
@@ -555,10 +561,20 @@ void Plotter::homing_tick() {
             }
             break;
 
+        case HomingStep::ORIGIN:
+            // move_to_target(0, 0, 500);
+            // if(IsMoveTargetDone()) {
+            //     this->homing_step = HomingStep::DONE;
+            //     Serial.println("=== HOMING COMPLETE ===");
+            //     break;
+            // }  
+            this->homing_step = HomingStep::DONE;
+            Serial.println("HOMING DONE _____________");
 
-            
+            break;
 
         case HomingStep::DONE:
+        
             break;
 
         case HomingStep::NONE:

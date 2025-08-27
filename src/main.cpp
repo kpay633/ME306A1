@@ -31,7 +31,7 @@ enum class State {
 
 // Function prototypes
 void new_state(State);
-void doMoving(float x, float y);
+void doMoving(float x, float y, float f);
 void doHoming();
 void doFault();
 
@@ -62,23 +62,23 @@ int main() {
 
         switch(global_state) {
             case State::IDLE:
-            // doHoming();
-                if(cmd.type == CommandType::G1) {
-                    plotter->move_to_target(cmd.x, cmd.y, 100);
-                    new_state(State::MOVING);
+                if(cmd.type == CommandType::G01) {
+                  plotter->move_to_target(cmd.x, cmd.y, cmd.f);
+                  new_state(State::MOVING);
+                  break;
                 }
                 else if(cmd.type == CommandType::G28) {
                     new_state(State::HOMING);
                     doHoming();
+                    break;
                 }
-                else if(cmd.type == CommandType::M999) {
-                    new_state(State::FAULT);
-                    doFault();
-                }
+                doHoming();
+                new_state(State::HOMING);
                 break;
+
             
             case State::MOVING:
-                doMoving(0,0);
+                doMoving(0,0,0);
                 break;
 
             case State::HOMING:
@@ -91,9 +91,8 @@ int main() {
             case State::FAULT:
                 // In FAULT state, motors are disabled and we wait for a reset
                 // For now, we just remain in this state. A reset command (M999) could be used to clear it.
-                if(cmd.type == CommandType::G28) {
+                if(cmd.type == CommandType::M999) {
                     new_state(State::HOMING);
-                    doHoming();
                 }
                 break;
         }
@@ -108,9 +107,9 @@ void new_state(State s) {
 }
 
 
-void doMoving(float x, float y) {
+void doMoving(float x, float y, float f) {
     if(!plotter->IsMoveTargetDone()){
-          plotter->move_to_target(x, y, 100);
+          plotter->move_to_target(x, y, f);
     } else {
     new_state(State::IDLE);
     }
@@ -136,6 +135,7 @@ void doFault() {
 
 
 ISR(INT2_vect){
+  Serial.println("ERROR IN 2---------------------------------------------------------");
   if (sys_ticks < 100){
     return;
   }
@@ -143,17 +143,20 @@ ISR(INT2_vect){
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
-      new_state(State::FAULT); 
+  Serial.println("ERROR IN 2.1---------------------------------------------------------");
+      new_state(State::IDLE); 
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Up) && (plotter->GetAllowedSwitch2() != Target::Up)){
         motor1->DisableMotor();
         motor2->DisableMotor();
+  Serial.println("ERROR IN 2.2---------------------------------------------------------");
         new_state(State::IDLE);
       }
     }
 }
 
 ISR(INT3_vect){
+  Serial.println("ERROR IN 3---------------------------------------------------------");
   if (sys_ticks < 100){
     return;
   }
@@ -161,17 +164,20 @@ ISR(INT3_vect){
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
+  Serial.println("ERROR IN 3.1---------------------------------------------------------");
       new_state(State::IDLE);
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Down) && (plotter->GetAllowedSwitch2() != Target::Down)){
         motor1->DisableMotor();
         motor2->DisableMotor();
+  Serial.println("ERROR IN 3.2---------------------------------------------------------");
         new_state(State::IDLE);
       }
     }
 }
 
 ISR(INT4_vect){
+  Serial.println("ERROR IN 4---------------------------------------------------------");
   if (sys_ticks < 100){
     return;
   }
@@ -179,17 +185,20 @@ ISR(INT4_vect){
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
+  Serial.println("ERROR IN 4.1---------------------------------------------------------");
       new_state(State::IDLE);
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Right) && (plotter->GetAllowedSwitch2() != Target::Right)){
         motor1->DisableMotor();
         motor2->DisableMotor();
+  Serial.println("ERROR IN 4.2---------------------------------------------------------");
         new_state(State::IDLE);
       }
     }
 }
 
 ISR(INT5_vect){
+  Serial.println("ERROR IN 5---------------------------------------------------------");
   if (sys_ticks < 100){
     return;
   }
@@ -197,11 +206,13 @@ ISR(INT5_vect){
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
+  Serial.println("ERROR IN 5.1---------------------------------------------------------");
       new_state(State::IDLE);
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Left) && (plotter->GetAllowedSwitch2() != Target::Left)){
         motor1->DisableMotor();
         motor2->DisableMotor();
+  Serial.println("ERROR IN 5.2---------------------------------------------------------");
         new_state(State::IDLE);
       }
     }

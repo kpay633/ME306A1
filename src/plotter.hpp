@@ -26,6 +26,7 @@ enum class HomingStep {
     RETREAT_DOWN_1,
     APPROACH_TOP, //SET TOP BOUNDARY
     RETREAT_DOWN_2,
+    ORIGIN,
     DONE                    // Homing process is complete
 };
 
