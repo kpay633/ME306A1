@@ -453,16 +453,20 @@ void Plotter::homing_tick() {
 
         case HomingStep::RETREAT_DOWN_2:
             if (MoveTime(retreat_time, Target::Down, retreat_speed)) {
-              this->homing_step = HomingStep::DONE;
+              this->homing_step = HomingStep::ORIGIN;
               allowed_switch = Target::None;
               allowed_switch2 = Target::None;
-              Serial.println("=== HOMING COMPLETE ===");
               break;
             }
             break;
 
-
-            
+        case HomingStep::ORIGIN:
+            move_to_target(0, 0, 500);
+            if(IsMoveToTargetDone()){
+              this->homing_step = HomingStep::DONE;
+              break;
+            }
+            Serial.println("=== HOMING COMPLETE ===");
 
         case HomingStep::DONE:
             break;

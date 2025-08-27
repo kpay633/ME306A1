@@ -39,6 +39,8 @@ Motor* motor1;
 Motor* motor2;
 Plotter* plotter;
 
+void timer1_init();
+
 
 int main() {
     Serial.begin(9600);
@@ -47,7 +49,7 @@ int main() {
     motor1 = new Motor(MotorID::M1);
     motor2 = new Motor(MotorID::M2);
     plotter = new Plotter(motor1, motor2);
-    // timer1_init();
+    timer1_init();
     sei();
 
     while (1) {
@@ -69,10 +71,7 @@ int main() {
                 break;
             
             case State::MOVING:
-                // In MOVING state, just check if the movement is complete
-                // if (plotter->is_moving_done()) {
-                //     new_state(State::IDLE);
-                // }
+                doMoving(0,0);
                 break;
                 
             case State::HOMING:
@@ -111,7 +110,11 @@ void doMoving(float x, float y, float f) {
     Serial.print(y);
     Serial.print(" F=");
     Serial.print(f);
-    plotter->move_to_target(x, y, f);
+    if(!plotter->IsMoveTargetDone()){
+          plotter->move_to_target(x, y, f);
+    } else {
+    new_state(State::IDLE);
+    }
 }
 
 
