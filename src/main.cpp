@@ -62,6 +62,7 @@ int main() {
 
         switch(global_state) {
             case State::IDLE:
+            // doHoming();
                 if(cmd.type == CommandType::G1) {
                     plotter->move_to_target(cmd.x, cmd.y, 100);
                     new_state(State::MOVING);
@@ -79,7 +80,7 @@ int main() {
             case State::MOVING:
                 doMoving(0,0);
                 break;
-                
+
             case State::HOMING:
                 plotter->homing_tick();
                 if (plotter->is_homing_done()) {
@@ -135,7 +136,7 @@ void doFault() {
 
 
 ISR(INT2_vect){
-  if (sys_ticks < 50){
+  if (sys_ticks < 100){
     return;
   }
   sys_ticks=0;
@@ -153,7 +154,7 @@ ISR(INT2_vect){
 }
 
 ISR(INT3_vect){
-  if (sys_ticks < 50){
+  if (sys_ticks < 100){
     return;
   }
   sys_ticks=0;
@@ -171,7 +172,7 @@ ISR(INT3_vect){
 }
 
 ISR(INT4_vect){
-  if (sys_ticks < 50){
+  if (sys_ticks < 100){
     return;
   }
   sys_ticks=0;
@@ -189,7 +190,7 @@ ISR(INT4_vect){
 }
 
 ISR(INT5_vect){
-  if (sys_ticks < 50){
+  if (sys_ticks < 100){
     return;
   }
   sys_ticks=0;

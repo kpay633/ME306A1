@@ -123,22 +123,22 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
     this->motor_right_control_effort = control_output_x - control_output_y;
 
 
-    Serial.print(">Proportional Control Effort Contribution:");
-    Serial.println(P_output_x);
-    Serial.print(">Integral Control Effort Contribution");
-    Serial.println(I_output_x);
-    Serial.print(">Derivative Control Effort Contribution:");
-    Serial.println(D_output_x);
+    // Serial.print(">Proportional Control Effort Contribution:");
+    // Serial.println(P_output_x);
+    // Serial.print(">Integral Control Effort Contribution");
+    // Serial.println(I_output_x);
+    // Serial.print(">Derivative Control Effort Contribution:");
+    // Serial.println(D_output_x);
     
-    Serial.print(">Total Control Effort X:");
-    Serial.println(control_output_x);
-    Serial.print(">Total Control Effort Y:");
-    Serial.println(control_output_y);
+    // Serial.print(">Total Control Effort X:");
+    // Serial.println(control_output_x);
+    // Serial.print(">Total Control Effort Y:");
+    // Serial.println(control_output_y);
     
-    Serial.print(">Control Effort to Left Motor:");
-    Serial.println(motor_left_control_effort);
-    Serial.print(">Control Effort to Right Motor:");
-    Serial.println(motor_right_control_effort);
+    // Serial.print(">Control Effort to Left Motor:");
+    // Serial.println(motor_left_control_effort);
+    // Serial.print(">Control Effort to Right Motor:");
+    // Serial.println(motor_right_control_effort);
 
 }
  
