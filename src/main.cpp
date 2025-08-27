@@ -108,8 +108,10 @@ void doMoving(float x, float y, float f) {
     Serial.print("Starting movement to X=");
     Serial.print(x);
     Serial.print(" Y=");
-    Serial.println(y);
-    plotter->move_to_target(x, y, 100);
+    Serial.print(y);
+    Serial.print(" F=");
+    Serial.print(f);
+    plotter->move_to_target(x, y, f);
 }
 
 
