@@ -8,6 +8,10 @@
 // Define the homing steps as an enum for the non-blocking state machine
 enum class HomingStep {
     NONE,                   // Homing not active
+    INIT_ON_LEFT,
+    INIT_ON_TOP,
+    INIT_ON_RIGHT,
+    INIT_ON_BOT,
     MOVE_LEFT,
     RETREAT_RIGHT_1,
     MOVE_DOWN,
@@ -69,6 +73,7 @@ class Plotter {
         void start_homing();
         void homing_tick();
         bool is_homing_done();
+        void move_to_origin();
 
     private:
         float current_pos[2];

@@ -61,24 +61,18 @@ int main() {
         cmd = parser.check_user_input(); 
 
         switch(global_state) {
-            motor1->stop_motor(MotorID::M1);
-            motor2->stop_motor(MotorID::M2);
             case State::IDLE:
                 if(cmd.type == CommandType::G01) {
-                  plotter->move_to_target(cmd.x, cmd.y, cmd.f);
                   new_state(State::MOVING);
+                  plotter->move_to_target(cmd.x, cmd.y, cmd.f);
                   break;
                 }
                 else if(cmd.type == CommandType::G28) {
-                    doHoming();
                     new_state(State::HOMING);
+                    doHoming();
                     break;
                 }
                 break;
-                // doHoming();
-                // new_state(State::HOMING);
-                // break;
-
             
             case State::MOVING:
                 doMoving(0,0,0);
@@ -86,6 +80,11 @@ int main() {
 
             case State::HOMING:
                 plotter->homing_tick();
+                Serial.print("X = ");
+                Serial.print(plotter->get_current_pos()[0]);
+                Serial.print(" Y = ");
+                Serial.print(plotter->get_current_pos()[1]);
+
                 if (plotter->is_homing_done()) {
                     new_state(State::IDLE);
                     break;
@@ -93,10 +92,11 @@ int main() {
                 break;
 
             case State::FAULT:
-                // In FAULT state, motors are disabled and we wait for a reset
-                // For now, we just remain in this state. A reset command (M999) could be used to clear it.
-                doFault();
+                motor1->stop_motor(MotorID::M1);
+                motor2->stop_motor(MotorID::M2);
                 if(cmd.type == CommandType::M999) {
+                      motor1->EnableMotor();
+                      motor2->EnableMotor();
                     new_state(State::IDLE);
                     break;
                 }
@@ -128,20 +128,13 @@ void doHoming() {
 }
 
 
-void doFault() {
-    Serial.println("!!! FAULT DETECTED. HALTING ALL OPERATIONS. !!!");
-    motor1->stop_motor(MotorID::M1);
-    motor2->stop_motor(MotorID::M2);
-}
-
-
 
 
 
 
 
 ISR(INT2_vect){
-  Serial.println("ERROR IN 2---------------------------------------------------------");
+  Serial.println("ERR 2");
   // if (sys_ticks < 100){
   //   return;
   // }
@@ -149,13 +142,13 @@ ISR(INT2_vect){
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
-  Serial.println("ERROR IN 2.1---------------------------------------------------------");
+  Serial.println("ERR 2.1");
       new_state(State::FAULT); 
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Up) && (plotter->GetAllowedSwitch2() != Target::Up)){
         motor1->DisableMotor();
         motor2->DisableMotor();
-  Serial.println("ERROR IN 2.2---------------------------------------------------------");
+  Serial.println("ERR 2.2");
         new_state(State::FAULT);
       }
     }

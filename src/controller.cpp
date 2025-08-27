@@ -29,7 +29,7 @@ void Controller::calculateControlEffort(float current_error_x, float current_err
     if(last_time ==0){
         last_time = now;
     }
-    this->dt = (now - last_time)/1000;
+    this->dt = (now - last_time)/1000.0;
     last_time = now;
 
    
