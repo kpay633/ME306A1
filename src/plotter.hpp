@@ -1,9 +1,34 @@
-// LATEST WORKING VERSION
+#ifndef PLOTTER_HPP
+#define PLOTTER_HPP
 
-#ifndef PLOTTER_H
-#define PLOTTER_H
+#include "motor.hpp"
+#include "limit_switch.hpp"
+#include "arduino.h"
 
-class Motor;
+// Define the homing steps as an enum for the non-blocking state machine
+enum class HomingStep {
+    NONE,                   // Homing not active
+    MOVE_LEFT,
+    RETREAT_RIGHT_1,
+    MOVE_DOWN,
+    RETREAT_UP_1,
+    APPROACH_BOTTOM,
+    APPROACH_LEFT, //
+    MOVE_OUT_LITTLE_RIGHT,
+    MOVE_OUT_LITTLE_UP,
+    RESET_ORIGIN, //SET LEFT AND BOTTOM BOUNDARIES
+    RETREAT_UP_2,
+    MOVE_RIGHT,
+    RETREAT_LEFT_1,
+    APPROACH_RIGHT, //SET RIGHT BOUNDARY
+    RETREAT_LEFT_2,
+    MOVE_UP,
+    RETREAT_DOWN_1,
+    APPROACH_TOP, //SET TOP BOUNDARY
+    RETREAT_DOWN_2,
+    DONE                    // Homing process is complete
+};
+
 
 enum class Target{
     Left,
@@ -26,19 +51,23 @@ class Plotter {
         void MoveDist(Target target, int distance);
         void home();
         void timer2_init();
-        void MoveTime(int time, Target target, int speed);
+        bool MoveTime(int time, Target target, int speed);
         void move_to_target(float x, float y, float speed);
-        float get_left_boundary();
+        bool IsMoveTargetDone();
         float get_right_boundary();
         float get_top_boundary();
         float get_bottom_boundary();
         void set_left_boundary(float boundary);
         void set_right_boundary(float boundary);
         void set_top_boundary(float boundary);
-        void set_bottom_boundary(float boundary);
+        void set_bottom_boundary(float boundary);        
+        float get_left_boundary();
         void IncrementTime();
         Target GetAllowedSwitch1();
         Target GetAllowedSwitch2();
+        void start_homing();
+        void homing_tick();
+        bool is_homing_done();
 
     private:
         float current_pos[2];
@@ -50,6 +79,11 @@ class Plotter {
         int time;
         Target allowed_switch = Target::None;
         Target allowed_switch2 = Target::None;
+        HomingStep homing_step = HomingStep::NONE;
+        bool is_moving = false;
+        u32 move_time_start = 0;
+
 };
+
 
 #endif // PLOTTER_H
