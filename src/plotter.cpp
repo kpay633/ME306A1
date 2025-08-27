@@ -438,143 +438,150 @@ void Plotter::homing_tick() {
             allowed_switch = Target::Left;
             allowed_switch2 = Target::Down; 
             if(limitSwitch.is_pressed(SWLEFT)) {
-              this->homing_step = HomingStep::MOVE_OUT_LITTLE_RIGHT;
-              break;  
+                this->homing_step = HomingStep::DONE;
+                allowed_switch = Target::None;
+                allowed_switch2 = Target::None; 
+                motor_A->stop_motor(MotorID::M1);
+                motor_B->stop_motor(MotorID::M2);
+                break;  
             }
             motor_A->move_motor(MotorID::M1, approach_speed, Direction::CW); 
             motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
             break;
 
-        case HomingStep::MOVE_OUT_LITTLE_RIGHT:
-            if (MoveTime(retreat_time, Target::Right, retreat_speed)) {
-              this->homing_step = HomingStep::MOVE_OUT_LITTLE_UP;
-              break;
-            }
-            break;
+        // case HomingStep::MOVE_OUT_LITTLE_RIGHT:
+        //     if (MoveTime(retreat_time, Target::Right, retreat_speed)) {
+        //       this->homing_step = HomingStep::MOVE_OUT_LITTLE_UP;
+        //       break;
+        //     }
+        //     break;
 
             
 
-        case HomingStep::MOVE_OUT_LITTLE_UP:
-            if (MoveTime(retreat_time, Target::Up, retreat_speed)) {
-              this->homing_step = HomingStep::RESET_ORIGIN;
-              break;
-            }
-            break;
+        // case HomingStep::MOVE_OUT_LITTLE_UP:
+        //     if (MoveTime(retreat_time, Target::Up, retreat_speed)) {
+        //       this->homing_step = HomingStep::RESET_ORIGIN;
+        //       break;
+        //     }
+        //     break;
 
-        case HomingStep::RESET_ORIGIN:
-            motor_A->ResetEncoder();
-            motor_B->ResetEncoder();
-            set_left_boundary(0);
-            set_bottom_boundary(0);
-            this->homing_step = HomingStep::RETREAT_UP_2;
-            break;
+        // case HomingStep::RESET_ORIGIN:
+        //     motor_A->ResetEncoder();
+        //     motor_B->ResetEncoder();
+        //     set_left_boundary(0);
+        //     set_bottom_boundary(0);
+        //     this->homing_step = HomingStep::RETREAT_UP_2;
+        //     break;
 
-        case HomingStep::RETREAT_UP_2:
-            if (MoveTime(retreat_time, Target::Up, retreat_speed)) {
-              this->homing_step = HomingStep::MOVE_RIGHT;
-              break;
-            }
-            break;
+        // case HomingStep::RETREAT_UP_2:
+        //     if (MoveTime(retreat_time, Target::Up, retreat_speed)) {
+        //       this->homing_step = HomingStep::MOVE_RIGHT;
+        //       break;
+        //     }
+        //     break;
   
-        case HomingStep::MOVE_RIGHT:
-            allowed_switch = Target::Right;
-            allowed_switch2 = Target::None; 
-            if(limitSwitch.is_pressed(SWRIGHT)) {
-              this->homing_step = HomingStep::RETREAT_LEFT_1;
-              break;  
-            }
-            Serial.println("Homing Step: MOVE_RIGHT");
-            motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
-            motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
-            break; 
+        // case HomingStep::MOVE_RIGHT:
+        //     allowed_switch = Target::Right;
+        //     allowed_switch2 = Target::None; 
+        //     if(limitSwitch.is_pressed(SWRIGHT)) {
+        //       this->homing_step = HomingStep::RETREAT_LEFT_1;
+        //       break;  
+        //     }
+        //     Serial.println("Homing Step: MOVE_RIGHT");
+        //     motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
+        //     motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CW);
+        //     break; 
 
-        case HomingStep::RETREAT_LEFT_1:
-            if (MoveTime(retreat_time, Target::Left, retreat_speed)) {
-              this->homing_step = HomingStep::APPROACH_RIGHT;
-              break;
-            }
-            Serial.println("Homing Step: RETREAT_LEFT_1");
-            break;
+        // case HomingStep::RETREAT_LEFT_1:
+        //     if (MoveTime(retreat_time, Target::Left, retreat_speed)) {
+        //       this->homing_step = HomingStep::APPROACH_RIGHT;
+        //       break;
+        //     }
+        //     Serial.println("Homing Step: RETREAT_LEFT_1");
+        //     break;
 
-        case HomingStep::APPROACH_RIGHT:
-            Serial.println("APPROACH RIGHT");
-            allowed_switch = Target::Right;
-            allowed_switch2 = Target::None; 
-            if(limitSwitch.is_pressed(SWRIGHT)) {
-              set_right_boundary(get_current_pos()[0]);
-              this->homing_step = HomingStep::RETREAT_LEFT_2;
-              break;  
-            }
-            motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
-            motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
-            break;
+        // case HomingStep::APPROACH_RIGHT:
+        //     Serial.println("APPROACH RIGHT");
+        //     allowed_switch = Target::Right;
+        //     allowed_switch2 = Target::None; 
+        //     if(limitSwitch.is_pressed(SWRIGHT)) {
+        //       set_right_boundary(get_current_pos()[0]);
+        //       this->homing_step = HomingStep::RETREAT_LEFT_2;
+        //       break;  
+        //     }
+        //     motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
+        //     motor_B->move_motor(MotorID::M2, approach_speed, Direction::CW);
+        //     break;
 
-        case HomingStep::RETREAT_LEFT_2:
-            Serial.println("RETREAT LEFT 2");
-            if (MoveTime(retreat_time, Target::Left, retreat_speed)) {
-              this->homing_step = HomingStep::MOVE_UP;
-              break;
-            }
-            break;
+        // case HomingStep::RETREAT_LEFT_2:
+        //     Serial.println("RETREAT LEFT 2");
+        //     if (MoveTime(retreat_time, Target::Left, retreat_speed)) {
+        //       this->homing_step = HomingStep::MOVE_UP;
+        //       break;
+        //     }
+        //     break;
 
-        case HomingStep::MOVE_UP:
-            Serial.println("MOVE UP");
-            allowed_switch = Target::Up;
-            allowed_switch2 = Target::None; 
-            if(limitSwitch.is_pressed(SWTOP)) {
-              this->homing_step = HomingStep::RETREAT_DOWN_1;
-              break;  
-            }
-            motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
-            motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
-            break;
+        // case HomingStep::MOVE_UP:
+        //     Serial.println("MOVE UP");
+        //     allowed_switch = Target::Up;
+        //     allowed_switch2 = Target::None; 
+        //     if(limitSwitch.is_pressed(SWTOP)) {
+        //       this->homing_step = HomingStep::RETREAT_DOWN_1;
+        //       break;  
+        //     }
+        //     motor_A->move_motor(MotorID::M1, nominal_speed, Direction::CCW); 
+        //     motor_B->move_motor(MotorID::M2, nominal_speed, Direction::CCW);
+        //     break;
 
-        case HomingStep::RETREAT_DOWN_1:
-            Serial.println("RETREAT DOWN 1");
-            if (MoveTime(retreat_time, Target::Down, retreat_speed)) {
-              this->homing_step = HomingStep::APPROACH_TOP;
-              break;
-            }
-            break;
+        // case HomingStep::RETREAT_DOWN_1:
+        //     Serial.println("RETREAT DOWN 1");
+        //     if (MoveTime(retreat_time, Target::Down, retreat_speed)) {
+        //       this->homing_step = HomingStep::APPROACH_TOP;
+        //       break;
+        //     }
+        //     break;
 
-        case HomingStep::APPROACH_TOP:
-            Serial.println("APPROACH TOP");
-            allowed_switch = Target::Up;
-            allowed_switch2 = Target::None; 
-            if(limitSwitch.is_pressed(SWTOP)) {
-              set_top_boundary(get_current_pos()[1]);
-              this->homing_step = HomingStep::RETREAT_DOWN_2;
-              break;  
-            }
-            motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
-            motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
-            break;
+        // case HomingStep::APPROACH_TOP:
+        //     Serial.println("APPROACH TOP");
+        //     allowed_switch = Target::Up;
+        //     allowed_switch2 = Target::None; 
+        //     if(limitSwitch.is_pressed(SWTOP)) {
+        //       set_top_boundary(get_current_pos()[1]);
+        //       this->homing_step = HomingStep::RETREAT_DOWN_2;
+        //       break;  
+        //     }
+        //     motor_A->move_motor(MotorID::M1, approach_speed, Direction::CCW); 
+        //     motor_B->move_motor(MotorID::M2, approach_speed, Direction::CCW);
+        //     break;
 
-        case HomingStep::RETREAT_DOWN_2:
-            Serial.println("homing step: RETREAT DOWN 2");
-            if (MoveTime(retreat_time, Target::Down, retreat_speed)) {
-              this->homing_step = HomingStep::ORIGIN;
-              allowed_switch = Target::None;
-              allowed_switch2 = Target::None;
-              Serial.println("=== HOMING COMPLETE ===");
-              break;
-            }
-            break;
+        // case HomingStep::RETREAT_DOWN_2:
+        //     Serial.println("homing step: RETREAT DOWN 2");
+        //     if (MoveTime(retreat_time, Target::Down, retreat_speed)) {
+        //       this->homing_step = HomingStep::ORIGIN;
+        //       allowed_switch = Target::None;
+        //       allowed_switch2 = Target::None;
+        //       Serial.println("=== HOMING COMPLETE ===");
+        //       break;
+        //     }
+        //     break;
 
-        case HomingStep::ORIGIN:
-            // move_to_target(0, 0, 500);
-            // if(IsMoveTargetDone()) {
-            //     this->homing_step = HomingStep::DONE;
-            //     Serial.println("=== HOMING COMPLETE ===");
-            //     break;
-            // }  
-            this->homing_step = HomingStep::DONE;
-            Serial.println("HOMING DONE _____________");
+        // case HomingStep::ORIGIN:
+        //     // move_to_target(0, 0, 500);
+        //     // if(IsMoveTargetDone()) {
+        //     //     this->homing_step = HomingStep::DONE;
+        //     //     Serial.println("=== HOMING COMPLETE ===");
+        //     //     break;
+        //     // }  
+        //     this->homing_step = HomingStep::DONE;
+        //     Serial.println("HOMING DONE _____________");
 
-            break;
+        //     break;
 
         case HomingStep::DONE:
-        
+            allowed_switch = Target::None;
+            allowed_switch2 = Target::None; 
+            motor_A->stop_motor(MotorID::M1);
+            motor_B->stop_motor(MotorID::M2);
             break;
 
         case HomingStep::NONE:

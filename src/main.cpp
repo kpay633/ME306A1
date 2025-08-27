@@ -44,7 +44,7 @@ Motor* motor1;
 Motor* motor2;
 Plotter* plotter;
 
-void timer1_init();
+// void timer1_init();
 
 
 int main() {
@@ -54,13 +54,15 @@ int main() {
     motor1 = new Motor(MotorID::M1);
     motor2 = new Motor(MotorID::M2);
     plotter = new Plotter(motor1, motor2);
-    timer1_init();
+    // timer1_init();
     sei();
 
     while (1) {
         cmd = parser.check_user_input(); 
 
         switch(global_state) {
+            motor1->stop_motor(MotorID::M1);
+            motor2->stop_motor(MotorID::M2);
             case State::IDLE:
                 if(cmd.type == CommandType::G01) {
                   plotter->move_to_target(cmd.x, cmd.y, cmd.f);
@@ -68,13 +70,14 @@ int main() {
                   break;
                 }
                 else if(cmd.type == CommandType::G28) {
-                    new_state(State::HOMING);
                     doHoming();
+                    new_state(State::HOMING);
                     break;
                 }
-                doHoming();
-                new_state(State::HOMING);
                 break;
+                // doHoming();
+                // new_state(State::HOMING);
+                // break;
 
             
             case State::MOVING:
@@ -85,14 +88,17 @@ int main() {
                 plotter->homing_tick();
                 if (plotter->is_homing_done()) {
                     new_state(State::IDLE);
+                    break;
                 }
                 break;
 
             case State::FAULT:
                 // In FAULT state, motors are disabled and we wait for a reset
                 // For now, we just remain in this state. A reset command (M999) could be used to clear it.
+                doFault();
                 if(cmd.type == CommandType::M999) {
-                    new_state(State::HOMING);
+                    new_state(State::IDLE);
+                    break;
                 }
                 break;
         }
@@ -136,84 +142,84 @@ void doFault() {
 
 ISR(INT2_vect){
   Serial.println("ERROR IN 2---------------------------------------------------------");
-  if (sys_ticks < 100){
-    return;
-  }
-  sys_ticks=0;
+  // if (sys_ticks < 100){
+  //   return;
+  // }
+  // sys_ticks=0;
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
   Serial.println("ERROR IN 2.1---------------------------------------------------------");
-      new_state(State::IDLE); 
+      new_state(State::FAULT); 
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Up) && (plotter->GetAllowedSwitch2() != Target::Up)){
         motor1->DisableMotor();
         motor2->DisableMotor();
   Serial.println("ERROR IN 2.2---------------------------------------------------------");
-        new_state(State::IDLE);
+        new_state(State::FAULT);
       }
     }
 }
 
 ISR(INT3_vect){
   Serial.println("ERROR IN 3---------------------------------------------------------");
-  if (sys_ticks < 100){
-    return;
-  }
-  sys_ticks=0;
+  // if (sys_ticks < 100){
+  //   return;
+  // }
+  // sys_ticks=0;
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
   Serial.println("ERROR IN 3.1---------------------------------------------------------");
-      new_state(State::IDLE);
+      new_state(State::FAULT);
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Down) && (plotter->GetAllowedSwitch2() != Target::Down)){
         motor1->DisableMotor();
         motor2->DisableMotor();
   Serial.println("ERROR IN 3.2---------------------------------------------------------");
-        new_state(State::IDLE);
+        new_state(State::FAULT);
       }
     }
 }
 
 ISR(INT4_vect){
   Serial.println("ERROR IN 4---------------------------------------------------------");
-  if (sys_ticks < 100){
-    return;
-  }
-  sys_ticks=0;
+  // if (sys_ticks < 100){
+  //   return;
+  // }
+  // sys_ticks=0;
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
   Serial.println("ERROR IN 4.1---------------------------------------------------------");
-      new_state(State::IDLE);
+      new_state(State::FAULT);
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Right) && (plotter->GetAllowedSwitch2() != Target::Right)){
         motor1->DisableMotor();
         motor2->DisableMotor();
-  Serial.println("ERROR IN 4.2---------------------------------------------------------");
-        new_state(State::IDLE);
+  Serial.println("ERR 4.2");
+        new_state(State::FAULT);
       }
     }
 }
 
 ISR(INT5_vect){
-  Serial.println("ERROR IN 5---------------------------------------------------------");
-  if (sys_ticks < 100){
-    return;
-  }
-  sys_ticks=0;
+  Serial.println("ERR 5");
+  // if (sys_ticks < 100){
+  //   return;
+  // }
+  // sys_ticks=0;
     if (global_state != State::HOMING){
       motor1->DisableMotor();
       motor2->DisableMotor();
-  Serial.println("ERROR IN 5.1---------------------------------------------------------");
-      new_state(State::IDLE);
+  Serial.println("ERR 5.1");
+      new_state(State::FAULT);
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Left) && (plotter->GetAllowedSwitch2() != Target::Left)){
         motor1->DisableMotor();
         motor2->DisableMotor();
   Serial.println("ERROR IN 5.2---------------------------------------------------------");
-        new_state(State::IDLE);
+        new_state(State::FAULT);
       }
     }
 }
@@ -222,29 +228,29 @@ ISR(TIMER2_OVF_vect) {
     plotter->IncrementTime();
 }
 
-ISR(TIMER1_COMPA_vect) {
-      sys_ticks++;  // 1ms has passed
-  }
+// ISR(TIMER1_COMPA_vect) {
+//       sys_ticks++;  // 1ms has passed
+//   }
 
-void timer1_init() {
-  cli(); // disable interrupts while configuring
+// void timer1_init() {
+//   cli(); // disable interrupts while configuring
 
-  TCCR1A = 0;  // normal mode
-  TCCR1B = 0;
+//   TCCR1A = 0;  // normal mode
+//   TCCR1B = 0;
 
-  // CTC mode (Clear Timer on Compare)
-  TCCR1B |= (1 << WGM12);
+//   // CTC mode (Clear Timer on Compare)
+//   TCCR1B |= (1 << WGM12);
 
-  // Compare match every 1ms
-  OCR1A = 249;  
-  // formula: OCR1A = (F_CPU / (prescaler * 1000)) - 1
-  // with F_CPU=16MHz, prescaler=64 → OCR1A=249
+//   // Compare match every 1ms
+//   OCR1A = 249;  
+//   // formula: OCR1A = (F_CPU / (prescaler * 1000)) - 1
+//   // with F_CPU=16MHz, prescaler=64 → OCR1A=249
 
-  // Enable interrupt on compare A
-  TIMSK1 |= (1 << OCIE1A);
+//   // Enable interrupt on compare A
+//   TIMSK1 |= (1 << OCIE1A);
 
-  // Start timer with prescaler = 64
-  TCCR1B |= (1 << CS11) | (1 << CS10);
+//   // Start timer with prescaler = 64
+//   TCCR1B |= (1 << CS11) | (1 << CS10);
 
-  sei(); // enable global interrupts
-}
+//   sei(); // enable global interrupts
+// }
