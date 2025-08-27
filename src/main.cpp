@@ -17,25 +17,20 @@
 #define MOT2_ENCA_PIN PD2
 #define MOT2_ENCB_PIN PD3
 
-
-
 volatile unsigned long sys_ticks = 0;   // should increment every 1ms
 
-// The core states of our state machine
 enum class State {
-    IDLE,       // Waiting for a new command
-    MOVING,     // Executing a G1 move command
-    HOMING,     // Executing the G28 homing sequence
-    FAULT       // An error has occurred, all operations halted
+    IDLE,
+    MOVING,
+    HOMING,
+    FAULT
 };
 
-// Function prototypes
 void new_state(State);
 void doMoving(float x, float y);
 void doHoming();
 void doFault();
 
-// Global variables for the state machine and hardware
 State global_state = State::IDLE;
 GCodeParser parser;
 GCodeCommand cmd;
@@ -60,17 +55,16 @@ int main() {
 
         switch(global_state) {
             case State::IDLE:
-                if(cmd.type == CommandType::G1) {
+                if(cmd.type == CommandType::G01) {
                     new_state(State::MOVING);
-                    doMoving(cmd.x, cmd.y);
+                    doMoving(cmd.x, cmd.y, cmd.f);
+                    break;
                 }
                 else if(cmd.type == CommandType::G28) {
                     new_state(State::HOMING);
                     doHoming();
-                }
-                else if(cmd.type == CommandType::M999) {
-                    new_state(State::FAULT);
-                    doFault();
+                    break;
+
                 }
                 break;
             
@@ -84,13 +78,20 @@ int main() {
             case State::HOMING:
                 plotter->homing_tick();
                 if (plotter->is_homing_done()) {
-                    new_state(State::IDLE);
+                  new_state(State::IDLE);
+                  break;
                 }
                 break;
 
             case State::FAULT:
                 // In FAULT state, motors are disabled and we wait for a reset
                 // For now, we just remain in this state. A reset command (M999) could be used to clear it.
+                if(cmd.type == CommandType::M999) {
+                  // NEED OT RESET EVERYTHING HERE... LIKE ENCODERS MAYBE?
+
+                  new_state(State::IDLE);
+                  break;
+                }
                 break;
         }
     }
@@ -99,12 +100,11 @@ int main() {
 
 void new_state(State s) {
     global_state = s;
-    Serial.print("Switching state to ");
     Serial.println(static_cast<int>(s)); // Prints the integer value of the enum
 }
 
 
-void doMoving(float x, float y) {
+void doMoving(float x, float y, float f) {
     Serial.print("Starting movement to X=");
     Serial.print(x);
     Serial.print(" Y=");
@@ -148,6 +148,8 @@ ISR(INT2_vect){
       }
     }
 }
+
+
 
 ISR(INT3_vect){
   if (sys_ticks < 50){
