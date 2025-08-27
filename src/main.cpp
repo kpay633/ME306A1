@@ -44,6 +44,8 @@ Motor* motor1;
 Motor* motor2;
 Plotter* plotter;
 
+void timer1_init();
+
 
 int main() {
     Serial.begin(9600);
@@ -52,7 +54,7 @@ int main() {
     motor1 = new Motor(MotorID::M1);
     motor2 = new Motor(MotorID::M2);
     plotter = new Plotter(motor1, motor2);
-    // timer1_init();
+    timer1_init();
     sei();
 
     while (1) {
@@ -61,8 +63,8 @@ int main() {
         switch(global_state) {
             case State::IDLE:
                 if(cmd.type == CommandType::G1) {
+                    plotter->move_to_target(cmd.x, cmd.y, 100);
                     new_state(State::MOVING);
-                    doMoving(cmd.x, cmd.y);
                 }
                 else if(cmd.type == CommandType::G28) {
                     new_state(State::HOMING);
@@ -75,10 +77,7 @@ int main() {
                 break;
             
             case State::MOVING:
-                // In MOVING state, just check if the movement is complete
-                // if (plotter->is_moving_done()) {
-                //     new_state(State::IDLE);
-                // }
+                doMoving(0,0);
                 break;
                 
             case State::HOMING:
@@ -91,6 +90,10 @@ int main() {
             case State::FAULT:
                 // In FAULT state, motors are disabled and we wait for a reset
                 // For now, we just remain in this state. A reset command (M999) could be used to clear it.
+                if(cmd.type == CommandType::G28) {
+                    new_state(State::HOMING);
+                    doHoming();
+                }
                 break;
         }
     }
@@ -105,11 +108,11 @@ void new_state(State s) {
 
 
 void doMoving(float x, float y) {
-    Serial.print("Starting movement to X=");
-    Serial.print(x);
-    Serial.print(" Y=");
-    Serial.println(y);
-    plotter->move_to_target(x, y, 100);
+    if(!plotter->IsMoveTargetDone()){
+          plotter->move_to_target(x, y, 100);
+    } else {
+    new_state(State::IDLE);
+    }
 }
 
 
