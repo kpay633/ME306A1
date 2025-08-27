@@ -26,6 +26,7 @@ enum class HomingStep {
     RETREAT_DOWN_1,
     APPROACH_TOP, //SET TOP BOUNDARY
     RETREAT_DOWN_2,
+    ORIGIN,
     DONE                    // Homing process is complete
 };
 
@@ -51,7 +52,9 @@ class Plotter {
         void MoveDist(Target target, int distance);
         void home();
         void timer2_init();
+
         bool MoveTime(int time, Target target, int speed);
+
         void move_to_target(float x, float y, float speed);
         bool IsMoveTargetDone();
         float get_right_boundary();
@@ -60,6 +63,7 @@ class Plotter {
         void set_left_boundary(float boundary);
         void set_right_boundary(float boundary);
         void set_top_boundary(float boundary);
+
         void set_bottom_boundary(float boundary);        
         float get_left_boundary();
         void IncrementTime();
@@ -68,6 +72,7 @@ class Plotter {
         void start_homing();
         void homing_tick();
         bool is_homing_done();
+
 
     private:
         float current_pos[2];
@@ -81,7 +86,6 @@ class Plotter {
         Target allowed_switch2 = Target::None;
         HomingStep homing_step = HomingStep::NONE;
         bool is_moving = false;
-        u32 move_time_start = 0;
 
 };
 
