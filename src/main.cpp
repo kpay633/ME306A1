@@ -20,6 +20,8 @@
 
 
 volatile unsigned long sys_ticks = 0;   // should increment every 1ms
+void timer1_init();
+
 
 // The core states of our state machine
 enum class State {
@@ -52,11 +54,21 @@ int main() {
     motor1 = new Motor(MotorID::M1);
     motor2 = new Motor(MotorID::M2);
     plotter = new Plotter(motor1, motor2);
-    // timer1_init();
+    timer1_init();
     sei();
+
+
 
     while (1) {
         cmd = parser.check_user_input(); 
+
+        // Debug: print state machine heartbeat
+        static State last_state = State::IDLE; // dummy init
+        if (global_state != last_state) {
+            Serial.print("[MAIN] Loop in state: ");
+            Serial.println(static_cast<int>(global_state));
+            last_state = global_state;
+        }
 
         switch(global_state) {
             case State::IDLE:
@@ -136,12 +148,15 @@ ISR(INT2_vect){
     return;
   }
   sys_ticks=0;
-    if (global_state != State::HOMING){
+  Serial.println("[ISR INT2] Limit switch TOP triggered");
+  if (global_state != State::HOMING){
+      Serial.println("Unexpected switch press OUTSIDE homing -> FAULT");
       motor1->DisableMotor();
       motor2->DisableMotor();
       new_state(State::FAULT); 
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Up) && (plotter->GetAllowedSwitch2() != Target::Up)){
+        Serial.println("TOP switch pressed but NOT expected -> FAULT");
         motor1->DisableMotor();
         motor2->DisableMotor();
         new_state(State::IDLE);
@@ -154,12 +169,15 @@ ISR(INT3_vect){
     return;
   }
   sys_ticks=0;
-    if (global_state != State::HOMING){
+  Serial.println("[ISR INT3] Limit switch BOTTOM triggered");
+  if (global_state != State::HOMING){
+      Serial.println("Unexpected switch press OUTSIDE homing -> FAULT");
       motor1->DisableMotor();
       motor2->DisableMotor();
       new_state(State::IDLE);
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Down) && (plotter->GetAllowedSwitch2() != Target::Down)){
+        Serial.println("BOTTOM switch pressed but NOT expected -> FAULT");
         motor1->DisableMotor();
         motor2->DisableMotor();
         new_state(State::IDLE);
@@ -172,12 +190,15 @@ ISR(INT4_vect){
     return;
   }
   sys_ticks=0;
+  Serial.println("[ISR INT4] Limit switch RIGHT triggered");
     if (global_state != State::HOMING){
+      Serial.println("Unexpected switch press OUTSIDE homing -> FAULT");
       motor1->DisableMotor();
       motor2->DisableMotor();
       new_state(State::IDLE);
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Right) && (plotter->GetAllowedSwitch2() != Target::Right)){
+        Serial.println("RIGHT switch pressed but NOT expected -> FAULT");
         motor1->DisableMotor();
         motor2->DisableMotor();
         new_state(State::IDLE);
@@ -190,12 +211,15 @@ ISR(INT5_vect){
     return;
   }
   sys_ticks=0;
-    if (global_state != State::HOMING){
+  Serial.println("[ISR INT5] Limit switch LEFT triggered");
+  if (global_state != State::HOMING){
+      Serial.println("Unexpected switch press OUTSIDE homing -> FAULT");
       motor1->DisableMotor();
       motor2->DisableMotor();
       new_state(State::IDLE);
     } else {
       if ((plotter->GetAllowedSwitch1() != Target::Left) && (plotter->GetAllowedSwitch2() != Target::Left)){
+        Serial.println("LEFT switch pressed but NOT expected -> FAULT");
         motor1->DisableMotor();
         motor2->DisableMotor();
         new_state(State::IDLE);
