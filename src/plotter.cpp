@@ -19,12 +19,12 @@ float motorA_move;
 float motorB_move;
 float max_abs;
 float scale;
-const float POSITION_TOLERANCE = 1;
+const float POSITION_TOLERANCE = 0.3;
 float* current;
 float delta_x;
 float delta_y;
 int iteration;
-int MAX_ITERATIONS = 100;
+int MAX_ITERATIONS = 150;
 
   //parmaeters to ramp up velcocity
 float initial_distance = 0.0;
@@ -204,7 +204,7 @@ void Plotter::move_to_target(float x_first, float y_first, float speed_first) {
     iteration++;
 
     //0.75 kp,0.6ki is best
-    Controller ctrl(0.75, 0.65, 0.0, 0.75, 0.65, 0.0, 0.0, 0.0, 0.0);
+    Controller ctrl(0.80, 0.6, 0.0, 0.75, 0.6, 0.0, 0.0, 0.0, 0.0);
     ctrl.setSaturationLimits(-105.0, 105.0);
         
     // Get current X/Y position
@@ -235,39 +235,39 @@ void Plotter::move_to_target(float x_first, float y_first, float speed_first) {
 
     // Teleplot: target vs current positions
     //CORRECTED Teleplot format
-    Serial.print(">Target X Position:");
-    Serial.println(x_target);
-    Serial.print(">Target Y Position:");
-    Serial.println(y_target);
+    // Serial.print(">Target X Position:");
+    // Serial.println(x_target);
+    // Serial.print(">Target Y Position:");
+    // Serial.println(y_target);
     
-    Serial.print(">Current X Position:");
-    Serial.println(current[0]);
-    Serial.print(">Current Y Position:");
-    Serial.println(current[1]);
+    // Serial.print(">Current X Position:");
+    // Serial.println(current[0]);
+    // Serial.print(">Current Y Position:");
+    // Serial.println(current[1]);
     
     Serial.print(">Error in X position:");
     Serial.println(delta_x);
     Serial.print(">Error in Y position:");
     Serial.println(delta_y);
 
-    Serial.print(">Distance Remaining:");
-    Serial.println(current_distance);
-    Serial.print(">Progress:");
-    Serial.println(progress);
-    Serial.print(">Velocity Scale:");
-    Serial.println(velocity_scale);
-    Serial.print(">Ramp Phase:");
-    Serial.println(ramp_up_phase ? 1 : 0);
+    // Serial.print(">Distance Remaining:");
+    // Serial.println(current_distance);
+    // Serial.print(">Progress:");
+    // Serial.println(progress);
+    // Serial.print(">Velocity Scale:");
+    // Serial.println(velocity_scale);
+    // Serial.print(">Ramp Phase:");
+    // Serial.println(ramp_up_phase ? 1 : 0);
 
-    Serial.print("Iter "); Serial.print(iteration);
-    Serial.print(" | Current: ("); Serial.print(current[0], 4);
-    Serial.print(", "); Serial.print(current[1], 4);
-    Serial.print(") | Counts: (MA "); Serial.print(motor_A->GetEncoderCounts());
-    Serial.print("MB "); Serial.print(motor_B->GetEncoderCounts());
-    Serial.print(") | Target: ("); Serial.print(x_target);
-    Serial.print(", "); Serial.print(y_target);
-    Serial.print(") | Error: ("); Serial.print(delta_x, 4);
-    Serial.print(", "); Serial.print(delta_y, 4);
+    // Serial.print("Iter "); Serial.print(iteration);
+    // Serial.print(" | Current: ("); Serial.print(current[0], 4);
+    // Serial.print(", "); Serial.print(current[1], 4);
+    // Serial.print(") | Counts: (MA "); Serial.print(motor_A->GetEncoderCounts());
+    // Serial.print("MB "); Serial.print(motor_B->GetEncoderCounts());
+    // Serial.print(") | Target: ("); Serial.print(x_target);
+    // Serial.print(", "); Serial.print(y_target);
+    // Serial.print(") | Error: ("); Serial.print(delta_x, 4);
+    // Serial.print(", "); Serial.print(delta_y, 4);
     
     // Check if we're close enough
     if (abs(delta_x) < POSITION_TOLERANCE && abs(delta_y) < POSITION_TOLERANCE) {
@@ -303,8 +303,8 @@ void Plotter::move_to_target(float x_first, float y_first, float speed_first) {
         motorB_move = motorB_move * scale;
     }
 
-    Serial.print("Motor moves - A: "); Serial.print(motorA_move, 4);
-    Serial.print(", B: "); Serial.println(motorB_move, 4);
+    // Serial.print("Motor moves - A: "); Serial.print(motorA_move, 4);
+    // Serial.print(", B: "); Serial.println(motorB_move, 4);
 
     motor_A->move_motor(MotorID::M1, (motorA_move + 145), dir_A);
     motor_B->move_motor(MotorID::M2, (motorB_move + 145), dir_B);
